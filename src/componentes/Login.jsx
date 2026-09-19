@@ -2,6 +2,7 @@ import { useState } from "react"
 
 function Login(){
     const [email, setEmail] = useState('')
+    const[senha, setSenha] = useState('')
     return(
         <main className="min-h-screen bg-[#fff8fa] flex items-center justify-center px-4">
             <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
@@ -26,12 +27,17 @@ function Login(){
                             setEmail(evento.target.value)
                         }}
                         />
-                    
+                    <p>{email}</p>
                     </div>
 
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                        <input type="password" id="password" placeholder="Digite sua senha" className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20" />
+                        <input type="password" id="password" placeholder="Digite sua senha" className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20"
+                        value={senha}
+                        onChange={(evento)=>{
+                            setSenha(evento.target.value)
+                        }} />
+                        <p>{senha}</p>
                     </div>
 
                     <button type="submit" className="w-full rounded-lg bg-[#6c233d] py-3 font-semibold text-white transition hover:bg-[#8a3455]">Entrar</button>
