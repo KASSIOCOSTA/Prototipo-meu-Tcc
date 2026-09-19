@@ -1,4 +1,7 @@
+import { useState } from "react"
+
 function Login(){
+    const [email, setEmail] = useState('')
     return(
         <main className="min-h-screen bg-[#fff8fa] flex items-center justify-center px-4">
             <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
@@ -15,7 +18,15 @@ function Login(){
                 <form className="space-y-5">
                     <div>
                         <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2">E-mail</label>
-                        <input type="email" id="email" placeholder="Digite seu e-mail" className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20" />
+                        <input 
+                        type="email"
+                        id="email" placeholder="Digite seu e-mail" 
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20" 
+                        onChange={(evento)=>{
+                            setEmail(evento.target.value)
+                        }}
+                        />
+                    
                     </div>
 
                     <div>
