@@ -13,18 +13,28 @@ function Login(){
         <main className="min-h-screen bg-[#fff8fa] flex items-center justify-center px-4">
             <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
 
-                <div className="text-center mb-8">
+                
+               
+                {logado? 
+                    (<>
+                        <h1>Bem vindo ao painel</h1>
+                        <button onClick={()=>setLogado(false)}>sair</button>
+                    </>):
+                    ( 
+                         <>
+                   
+                    <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-[#6c233d]">
                         Nosso presente
                     </h1>
                     <p className="mt-2 text-gray-500 ">
                         Crie experiências especias para acompanhar seus presentes
                     </p>
-                </div>
-
-                <form className="space-y-5"
-                onSubmit={(evento)=>{
-                    evento.preventDefault()
+                    </div>
+                    
+                    <form className="space-y-5"
+                      onSubmit={(evento)=>{
+                      evento.preventDefault()
                     if(email!== "" && senha !== "" && senha.length >=6){
                         if(email.toLowerCase() ===emailCorreto && senha === senhaCorreta){
                         setLogado(true)
@@ -47,6 +57,7 @@ function Login(){
                     
                 }}
                 >
+                    {erro && <p>{erro}</p>}
                     <div>
                         <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2">E-mail</label>
                         <input 
@@ -56,11 +67,9 @@ function Login(){
                         value={email}
                         onChange={(evento)=>{
                             setEmail(evento.target.value)
+                            setErro('')
                         }}
-                        />
-                    <p>{email}</p>
-                    {logado && <p> Entrou</p>}
-                    {erro && <p>{erro}</p>}
+                        />                 
                     </div>
 
                     <div>
@@ -69,21 +78,28 @@ function Login(){
                         value={senha}
                         onChange={(evento)=>{
                             setSenha(evento.target.value)
+                            setErro("")
+                            
                         }} />
-                        <p>{senha}</p>
                     </div>
-
+                    
                     <button type="submit" className="w-full rounded-lg bg-[#6c233d] py-3 font-semibold text-white transition hover:bg-[#8a3455]">Entrar</button>
 
-                </form>
-
-                <div className="mt-6 text-center text-sm">
+                    </form>
+                
+                    <div className="mt-6 text-center text-sm">
                     <a href="#" className="text-[#6c233d] hover:underline">Esqueci minha senha</a>
-                </div>
-                <div className="mt-5 border-t border-gray-200 pt-5 text-center text-sm" >
+                    </div>
+                    <div className="mt-5 border-t border-gray-200 pt-5 text-center text-sm" >
                     <span>Ainda não possui uma conta?</span>
                     <a href="#" className="ml-1 font-semibold text-[#6c233d] hover:underline">Criar conta</a>
-                </div>
+                    </div>
+                    </>)}
+           
+
+               
+
+                
 
             </section>
         </main>
