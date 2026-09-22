@@ -3,6 +3,12 @@ import { useState } from "react"
 function Login(){
     const [email, setEmail] = useState('')
     const[senha, setSenha] = useState('')
+    const[logado,setLogado] =useState(false)
+    const[erro,setErro] = useState("")
+
+    const emailCorreto = "kassio@gmail.com"
+    const senhaCorreta = "123456"
+
     return(
         <main className="min-h-screen bg-[#fff8fa] flex items-center justify-center px-4">
             <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
@@ -16,18 +22,45 @@ function Login(){
                     </p>
                 </div>
 
-                <form className="space-y-5">
+                <form className="space-y-5"
+                onSubmit={(evento)=>{
+                    evento.preventDefault()
+                    if(email!== "" && senha !== "" && senha.length >=6){
+                        if(email.toLowerCase() ===emailCorreto && senha === senhaCorreta){
+                        setLogado(true)
+                        setErro('')
+                        console.log(`senha:${senha}`)
+                        console.log(`email:${email}`)  
+                        } else{
+                            setErro('Senha ou usuario invalido')
+                        }
+                    }else{
+                        if(email===""){
+                            setErro('O email esta vazio')
+                        
+                        }else if(senha==='' || senha.length<6){
+                            setErro('Senha invalida Min 6 caracteres')
+                        }
+                        
+                        
+                    }
+                    
+                }}
+                >
                     <div>
                         <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2">E-mail</label>
                         <input 
                         type="email"
                         id="email" placeholder="Digite seu e-mail" 
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20" 
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20"
+                        value={email}
                         onChange={(evento)=>{
                             setEmail(evento.target.value)
                         }}
                         />
                     <p>{email}</p>
+                    {logado && <p> Entrou</p>}
+                    {erro && <p>{erro}</p>}
                     </div>
 
                     <div>
