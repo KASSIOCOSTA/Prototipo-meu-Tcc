@@ -38,17 +38,20 @@ function Login(){
                     if(email!== "" && senha !== "" && senha.length >=6){
                         if(email.toLowerCase() ===emailCorreto && senha === senhaCorreta){
                         setLogado(true)
-                        setErro('')
-                        console.log(`senha:${senha}`)
-                        console.log(`email:${email}`)  
+                        setErro('')  
                         } else{
                             setErro('Senha ou usuario invalido')
                         }
                     }else{
-                        if(email===""){
-                            setErro('O email esta vazio')
+                        if(email==="" && senha ===""){
+                            setErro('E-mail & senha vazio')
                         
-                        }else if(senha==='' || senha.length<6){
+                        }else if(email===''){
+                            setErro('E-mail vazio')
+                        }
+                        else if(senha===''){
+                            setErro('Senha vazia')
+                        }else if(senha.length<6){
                             setErro('Senha invalida Min 6 caracteres')
                         }
                         
