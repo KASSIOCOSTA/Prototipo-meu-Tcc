@@ -1,10 +1,16 @@
 import { useState } from "react"
+import Painel from "./Painel"
 
 function Login(){
     const [email, setEmail] = useState('')
     const[senha, setSenha] = useState('')
     const[logado,setLogado] =useState(false)
     const[erro,setErro] = useState("")
+
+    const menuLogin = ()=>{
+        setLogado(false)
+        setErro('')
+    }
 
     const emailCorreto = "kassio@gmail.com"
     const senhaCorreta = "123456"
@@ -17,8 +23,7 @@ function Login(){
                
                 {logado? 
                     (<>
-                        <h1>Bem vindo ao painel</h1>
-                        <button onClick={()=>setLogado(false)}>sair</button>
+                        <Painel sair={menuLogin}/>
                     </>):
                     ( 
                          <>
@@ -35,15 +40,8 @@ function Login(){
                     <form className="space-y-5"
                       onSubmit={(evento)=>{
                       evento.preventDefault()
-                    if(email!== "" && senha !== "" && senha.length >=6){
-                        if(email.toLowerCase() ===emailCorreto && senha === senhaCorreta){
-                        setLogado(true)
-                        setErro('')  
-                        } else{
-                            setErro('Senha ou usuario invalido')
-                        }
-                    }else{
-                        if(email==="" && senha ===""){
+                                        
+                    if(email==="" && senha ===""){
                             setErro('E-mail & senha vazio')
                         
                         }else if(email===''){
@@ -53,12 +51,21 @@ function Login(){
                             setErro('Senha vazia')
                         }else if(senha.length<6){
                             setErro('Senha invalida Min 6 caracteres')
-                        }
+                        }else{
+                            if(email.toLowerCase() ===emailCorreto && senha === senhaCorreta){
+                        setLogado(true)
+                        setErro('')  
+                             }else{
+                            setErro('Senha ou usuario invalido')
                         
+                    }
+                        }
+                    
+                    
                         
                     }
                     
-                }}
+                }
                 >
                     {erro && <p>{erro}</p>}
                     <div>
@@ -79,6 +86,7 @@ function Login(){
                         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
                         <input type="password" id="password" placeholder="Digite sua senha" className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20"
                         value={senha}
+                        minLength={6}
                         onChange={(evento)=>{
                             setSenha(evento.target.value)
                             setErro("")
