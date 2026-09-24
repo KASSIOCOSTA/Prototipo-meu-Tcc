@@ -12,7 +12,7 @@ function Login(){
         setErro('')
     }
 
-    const emailCorreto = "kassio@gmail.com"
+    const emailCorreto = "k@gmail.com"
     const senhaCorreta = "123456"
 
     return(
@@ -72,6 +72,7 @@ function Login(){
                         <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-2">E-mail</label>
                         <input 
                         type="email"
+                        autoComplete="email"
                         id="email" placeholder="Digite seu e-mail" 
                         className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-[#6c233d] focus:ring-2 focus:ring-[#6c233d]/20"
                         value={email}

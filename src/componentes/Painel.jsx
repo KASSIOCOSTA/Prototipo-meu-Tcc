@@ -3,9 +3,17 @@ import CriarExperiencia from "./CriarExperiencia"
 
 function Painel({sair}){
 const[criando,setCriando]=useState(false)
+const[solicitacoes,setSolicitacoes] = useState([])
+
 const voltarPainel =()=>{
     setCriando(false)
 }
+const adicionarSolicitacoes =(solicitacao)=>{
+    setSolicitacoes([...solicitacoes, solicitacao])
+}
+//function
+
+
 
      return(
 <div>
