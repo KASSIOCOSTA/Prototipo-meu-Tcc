@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { QRCodeCanvas } from 'qrcode.react'
 
-function CriarExperiencia({voltar}){
+function CriarExperiencia({voltar,adicionarSolicitacoes}){
     const[nomeCliente, setNomeCliente]= useState('')
     const[erro, setErro]= useState('')
     const[link, setLink] = useState('')
@@ -14,6 +14,10 @@ function CriarExperiencia({voltar}){
         }else{
              setLink('https://nossoapp.com/p/7F82K9')
              setQrCode('https://nossoapp.com/p/7F82K9')
+             adicionarSolicitacoes({
+                nome:nomeCliente,
+                status:'Personalização pendente'
+             })
         }
 
     }
@@ -50,7 +54,7 @@ function CriarExperiencia({voltar}){
             <button onClick={baixarQRCode}>Baixar QR Code</button>
             </>)}
 
-            <button onClick={voltar}>sair</button>
+            <button onClick={voltar}>Voltar</button>
         </div>
     )
 }
