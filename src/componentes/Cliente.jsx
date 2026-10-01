@@ -4,11 +4,13 @@ function Cliente() {
     const [fotoPrincipal, setFotoPrincipal] = useState(null)
     const [musica, setMusica] = useState("")
     const [fotosCarrossel, setFotosCarrossel] = useState([])
-    const [usarContador,setUsarContador]= useState(false)
-    const [dataInicio,setDataInicio] = useState('')
-    const [mensagem, setMensagem]= useState('')
-    const[visualizando,setVisualizando]=useState(false)
-//States ^
+    const [usarContador, setUsarContador] = useState(false)
+    const [dataInicio, setDataInicio] = useState("")
+    const [mensagem, setMensagem] = useState("")
+    const [visualizando, setVisualizando] = useState(false)
+    const [fotoAtual, setFotoAtual] = useState(0)
+
+    // Funções
 
     const escolherFoto = (evento) => {
         setFotoPrincipal(evento.target.files[0])
@@ -29,31 +31,85 @@ function Cliente() {
 
         setFotosCarrossel(arquivos)
     }
-//Funções
-if (visualizando) {
+
+    // Pré-visualização
+
+    if (visualizando) {
         return (
             <div>
                 <h1>Pré-visualização</h1>
 
                 {fotoPrincipal && (
-                    <p>
-                        Foto principal: {fotoPrincipal.name}
-                    </p>
+                    <>
+                        <p>
+                            Foto principal: {fotoPrincipal.name}
+                        </p>
+
+                        <img
+                            src={URL.createObjectURL(fotoPrincipal)}
+                            alt="Foto principal"
+                            width="300"
+                        />
+                    </>
                 )}
 
                 <p>
                     Música: {musica}
                 </p>
 
-                <p>
-                    Fotos do carrossel: {fotosCarrossel.length}
-                </p>
+                {/* CARROSSEL */}
+
+                <div>
+                    <p>Fotos do carrossel:</p>
+
+                    {fotosCarrossel.length > 0 && (
+                        <div>
+                            <img
+                                src={URL.createObjectURL(
+                                    fotosCarrossel[fotoAtual]
+                                )}
+                                alt={`Foto ${fotoAtual + 1}`}
+                                width="300"
+                            />
+
+                            <p>
+                                Foto {fotoAtual + 1} de{" "}
+                                {fotosCarrossel.length}
+                            </p>
+
+                            <button
+                                onClick={() =>
+                                    setFotoAtual(fotoAtual - 1)
+                                }
+                                disabled={fotoAtual === 0}
+                            >
+                                ← Anterior
+                            </button>
+
+                            <button
+                                onClick={() =>
+                                    setFotoAtual(fotoAtual + 1)
+                                }
+                                disabled={
+                                    fotoAtual ===
+                                    fotosCarrossel.length - 1
+                                }
+                            >
+                                Próxima →
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* CONTADOR */}
 
                 {usarContador && (
                     <p>
                         Data: {dataInicio}
                     </p>
                 )}
+
+                {/* MENSAGEM */}
 
                 <p>Mensagem:</p>
 
@@ -69,6 +125,8 @@ if (visualizando) {
             </div>
         )
     }
+
+    // Formulário
 
     return (
         <div>
@@ -158,56 +216,71 @@ if (visualizando) {
                     </p>
                 )}
             </div>
+
+            {/* CONTADOR */}
+
             <div>
-                <label >
-                    <input type="checkbox"
-                    checked={usarContador}
-                    onChange={(evento)=>{
-                        setUsarContador(evento.target.checked)
-                    }} />
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={usarContador}
+                        onChange={(evento) =>
+                            setUsarContador(evento.target.checked)
+                        }
+                    />
+
                     Quero mostrar o tempo juntos
                 </label>
-                {usarContador&&(
+
+                {usarContador && (
                     <div>
                         <label htmlFor="dataInicio">
-                            Data de Início
+                            Data de início
                         </label>
-                        <input 
-                        type="date" id="dataInicio"
-                        value={dataInicio}
-                        onChange={(evento)=>{
-                            setDataInicio(evento.target.value)
-                        }} />
 
+                        <input
+                            type="date"
+                            id="dataInicio"
+                            value={dataInicio}
+                            onChange={(evento) =>
+                                setDataInicio(evento.target.value)
+                            }
+                        />
                     </div>
-                    
                 )}
-
             </div>
+
+            {/* MENSAGEM */}
 
             <div>
                 <label htmlFor="mensagem">
-                    mensagem final
-
+                    Mensagem final
                 </label>
-                <textarea 
-                id="mensagem"
-                value={mensagem}
-                onChange={(evento)=>{
-                    setMensagem(evento.target.value)
-                }}
-                placeholder="Escreva uma mensagem especial"
-                min={50}
-                maxLength={1000}
-                ></textarea>
-                <p>{mensagem.length}/1000 caracteres</p>
+
+                <textarea
+                    id="mensagem"
+                    value={mensagem}
+                    onChange={(evento) =>
+                        setMensagem(evento.target.value)
+                    }
+                    placeholder="Escreva uma mensagem especial"
+                    minLength={50}
+                    maxLength={1000}
+                />
+
+                <p>
+                    {mensagem.length}/1000 caracteres
+                </p>
             </div>
+
+            {/* VISUALIZAÇÃO */}
+
             <button
-            onClick={()=>setVisualizando(true)}>
-                Vizualizador
+                onClick={() => setVisualizando(true)}
+            >
+                Visualizar experiência
             </button>
         </div>
-        //fim
     )
 }
 
