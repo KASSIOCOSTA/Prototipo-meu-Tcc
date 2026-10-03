@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-function Cliente() {
+function Cliente({enviarExperiencia,voltar}) {
     const [fotoPrincipal, setFotoPrincipal] = useState(null)
     const [musica, setMusica] = useState("")
     const [fotosCarrossel, setFotosCarrossel] = useState([])
@@ -31,6 +31,7 @@ function Cliente() {
 
         setFotosCarrossel(arquivos)
     }
+    
 
     // Pré-visualização
 
@@ -122,6 +123,15 @@ function Cliente() {
                 >
                     Voltar para editar
                 </button>
+                <button
+                    onClick={enviarExperiencia}
+
+                >
+                    Enviar experiência
+                </button>
+                <button onClick={voltar}>
+    Voltar ao painel
+</button>
             </div>
         )
     }
@@ -276,7 +286,22 @@ function Cliente() {
             {/* VISUALIZAÇÃO */}
 
             <button
-                onClick={() => setVisualizando(true)}
+                onClick={()=>{
+                    if(fotoPrincipal ===null){
+                        alert('Escolha a foto principal')
+                        return
+                    }else if(musica === ""){
+                        alert('Selecione uma musica')
+                        return
+                    }else if(fotosCarrossel.length<3){
+                        alert('Adicione no mínimo 3 fotos')
+                        return
+                    }else if(mensagem.length<50){
+                        alert('Digite no mínimo 50 caracteres')
+                        return
+                    }
+                    setVisualizando(true)
+                }}
             >
                 Visualizar experiência
             </button>

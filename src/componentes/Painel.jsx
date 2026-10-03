@@ -1,6 +1,7 @@
 import { useState } from "react"
 
 import CriarExperiencia from "./CriarExperiencia"
+import Cliente from "./Cliente"
 
 function Painel({ sair }) {
 
@@ -9,15 +10,30 @@ function Painel({ sair }) {
     const [solicitacaoSelecionada, setSolicitacaoSelecionada] = useState(null)
     const [verConfirmados, setVerConfirmados] = useState(false)
     const [verSolicitacoes, setVerSolicitacoes] = useState(false)
+    const [mostraCliente,setMostrarCliente] = useState(false)
 //useStates
 
     const voltarPainel = () => {
         setCriando(false)
     }
+    const voltarDoCliente = () => {
+    setMostrarCliente(false)
+}
 
 
     const adicionarSolicitacoes = (solicitacao) => {
         setSolicitacoes([...solicitacoes, solicitacao])
+    }
+   
+    const enviarExperiencia=()=>{
+        setSolicitacoes(
+            solicitacoes.map((solicitacao)=>({
+                ...solicitacao,
+                status: 'Confirmado'
+            }))
+
+        )
+        console.log('Experiência enviada')
     }
     
 
@@ -82,7 +98,13 @@ function Painel({ sair }) {
             </div>
         )
     }
+if(mostraCliente){
+     return (
+        <Cliente enviarExperiencia={enviarExperiencia}
+        voltar={voltarDoCliente} />
 
+    )
+}
 
     return (
 
@@ -316,6 +338,18 @@ function Painel({ sair }) {
                             </p>
 
                         </button>
+                        <button
+    onClick={() => setMostrarCliente(true)}
+    className="mb-8 w-full rounded-2xl bg-pink-600 p-6 text-left text-white"
+>
+    <h2 className="text-xl font-bold">
+        Testar tela do cliente
+    </h2>
+
+    <p className="mt-2 text-sm">
+        Abrir a tela de personalização.
+    </p>
+</button>
 
 
                         {/* Cards */}
