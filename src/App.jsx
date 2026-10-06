@@ -12,9 +12,7 @@ function App() {
             ) : (
                 <>
                 <Login />
-                <button onClick={() => setMostrarCliente(true)}>
-                     Testar tela do cliente
-                </button>
+                
                 </>
             )}
         </div>

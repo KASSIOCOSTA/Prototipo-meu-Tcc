@@ -21,12 +21,15 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
             setErro("Digite o nome do Cliente")
 
         } else {
+            const id = crypto.randomUUID()
+            const novoLink = `https://nossoapp.com/p/${id}`
 
-            setLink("https://nossoapp.com/p/7F82K9")
+            setLink(novoLink)
 
-            setQrCode("https://nossoapp.com/p/7F82K9")
+            setQrCode(novoLink)
 
             adicionarSolicitacoes({
+                id: id,
                 nome: nomeCliente,
                 status: "Personalização pendente"
             })

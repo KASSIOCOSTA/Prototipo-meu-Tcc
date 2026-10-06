@@ -124,7 +124,18 @@ function Cliente({enviarExperiencia,voltar}) {
                     Voltar para editar
                 </button>
                 <button
-                    onClick={enviarExperiencia}
+                    onClick={
+                        ()=>{
+                            const dadosExperiencia={
+                                fotoPrincipal: fotoPrincipal,
+                                musica: musica,
+                                fotosCarrossel: fotosCarrossel,
+                                usarContador: dataInicio,
+                                mensagem: mensagem
+                            }
+                            enviarExperiencia(dadosExperiencia)
+                        }
+                    }
 
                 >
                     Enviar experiência

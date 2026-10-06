@@ -8,11 +8,12 @@ function Painel({ sair }) {
     const [criando, setCriando] = useState(false)
     const [solicitacoes, setSolicitacoes] = useState([])
     const [solicitacaoSelecionada, setSolicitacaoSelecionada] = useState(null)
+    const [idClienteAtual, setIdClienteAtual]=useState(null)
     const [verConfirmados, setVerConfirmados] = useState(false)
     const [verSolicitacoes, setVerSolicitacoes] = useState(false)
     const [mostraCliente,setMostrarCliente] = useState(false)
 //useStates
-
+//<div className="space-y-4">
     const voltarPainel = () => {
         setCriando(false)
     }
@@ -25,16 +26,24 @@ function Painel({ sair }) {
         setSolicitacoes([...solicitacoes, solicitacao])
     }
    
-    const enviarExperiencia=()=>{
-        setSolicitacoes(
-            solicitacoes.map((solicitacao)=>({
-                ...solicitacao,
-                status: 'Confirmado'
-            }))
+    const enviarExperiencia = (dadosExperiencia) => {
+        console.log('dados recebidos', dadosExperiencia)
+    setSolicitacoes(
+        solicitacoes.map((solicitacao) => {
+            if (solicitacao.id === idClienteAtual) {
+                return {
+                    ...solicitacao,
+                    status: "Confirmado",
+                    experiencia: dadosExperiencia
+                }
+            }
 
-        )
-        console.log('Experiência enviada')
-    }
+            return solicitacao
+        })
+    )
+
+    console.log("Experiência enviada")
+}
     
 
 //funções
@@ -77,6 +86,17 @@ function Painel({ sair }) {
                                     {solicitacaoSelecionada.nome}
                                 </p>
                             </div>
+                            {solicitacaoSelecionada.experiencia && (
+                                 <div className="mt-6 rounded-xl bg-slate-50 p-4">
+                                  <p className="text-sm text-slate-500">
+                                      Mensagem
+                                                 </p>
+
+                                  <p className="mt-1 text-slate-900">
+                                      {solicitacaoSelecionada.experiencia.mensagem}
+                                  </p>
+                              </div>
+                            )}
 
 
                             <div className="rounded-xl bg-slate-50 p-4">
@@ -339,7 +359,14 @@ if(mostraCliente){
 
                         </button>
                         <button
-    onClick={() => setMostrarCliente(true)}
+    onClick={() => {
+        if(solicitacoes.length ===0){
+            alert('Crie uma Solicitação primeiro')
+            return
+        }
+        setMostrarCliente(true)
+        setIdClienteAtual(solicitacoes[0].id)
+    }}
     className="mb-8 w-full rounded-2xl bg-pink-600 p-6 text-left text-white"
 >
     <h2 className="text-xl font-bold">
