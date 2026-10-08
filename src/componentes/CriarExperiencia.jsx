@@ -1,16 +1,15 @@
 import { useState } from "react";
-
 import { QRCodeCanvas } from "qrcode.react";
 
 function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
+  // useStates
   const [nomeCliente, setNomeCliente] = useState("");
-
   const [erro, setErro] = useState("");
-
   const [link, setLink] = useState("");
-
   const [qrCode, setQrCode] = useState("");
+  // useStates
 
+  //funções
   // Gerar link
   const gerarLink = () => {
     if (nomeCliente === "") {
@@ -18,11 +17,8 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
     } else {
       const id = crypto.randomUUID();
       const novoLink = `https://nossoapp.com/p/${id}`;
-
       setLink(novoLink);
-
       setQrCode(novoLink);
-
       adicionarSolicitacoes({
         id: id,
         nome: nomeCliente.toLocaleUpperCase(),
@@ -34,15 +30,10 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
   // Baixar QR Code
   const baixarQRCode = () => {
     const canvas = document.querySelector("#qr-code");
-
     const imagem = canvas.toDataURL("image/png");
-
     const linkDownload = document.createElement("a");
-
     linkDownload.href = imagem;
-
     linkDownload.download = `${nomeCliente}.png`;
-
     linkDownload.click();
   };
 
@@ -50,7 +41,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
     <div className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-2xl">
         {/* Voltar */}
-
         <button
           onClick={voltar}
           className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -62,23 +52,19 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
 
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
           {/* Cabeçalho */}
-
           <div className="mb-8">
             <p className="text-sm font-medium text-indigo-600">
               Nova experiência
             </p>
-
             <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
               Criar experiência
             </h1>
-
             <p className="mt-2 text-slate-500">
               Crie uma solicitação e gere um link exclusivo para o cliente.
             </p>
           </div>
 
           {/* Nome do cliente */}
-
           <div className="space-y-2">
             <label
               htmlFor="nome"
@@ -101,7 +87,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
           </div>
 
           {/* Erro */}
-
           {erro && (
             <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
               <p className="text-sm font-medium text-red-600">{erro}</p>
@@ -109,7 +94,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
           )}
 
           {/* Botão gerar */}
-
           <button
             onClick={gerarLink}
             className="mt-5 w-full rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.99]"
@@ -118,7 +102,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
           </button>
 
           {/* Resultado */}
-
           {link && (
             <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
               <div className="mb-5">
@@ -132,7 +115,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
               </div>
 
               {/* Link */}
-
               <div className="rounded-xl bg-white p-4 ring-1 ring-slate-200">
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
                   Link exclusivo
@@ -142,7 +124,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
               </div>
 
               {/* Copiar */}
-
               <button
                 onClick={() => navigator.clipboard.writeText(link)}
                 className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
@@ -151,7 +132,6 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
               </button>
 
               {/* QR Code */}
-
               {qrCode && (
                 <div className="mt-6 flex flex-col items-center rounded-2xl bg-white p-6 ring-1 ring-slate-200">
                   <p className="mb-4 text-sm font-semibold text-slate-700">

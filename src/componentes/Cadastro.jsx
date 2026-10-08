@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 function Cadastro() {
+//useStates
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [email, setEmail] = useState("");
@@ -8,8 +9,9 @@ function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [logo, setLogo] = useState(null);
   const [erro, setErro] = useState("");
-  //useStates
+//useStates
 
+//funções
   function verificacao() {
     if (nomeEmpresa === "") {
       setErro("Digite o nome da Empresa");
@@ -24,7 +26,10 @@ function Cadastro() {
     } else if (logo === null) {
       setErro("Adicionar uma foto para o Logo");
     }
-  }
+  } //verificar se os campos foram preenchido
+
+//funções
+
 
   return (
     <main>

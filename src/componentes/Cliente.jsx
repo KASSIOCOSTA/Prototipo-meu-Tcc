@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 function Cliente({ enviarExperiencia, voltar, idCliente }) {
+//useStates
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [musica, setMusica] = useState("");
   const [fotosCarrossel, setFotosCarrossel] = useState([]);
@@ -9,12 +10,13 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
   const [mensagem, setMensagem] = useState("");
   const [visualizando, setVisualizando] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(0);
+//useStates
 
-  // Funções
+// Funções
 
   const escolherFoto = (evento) => {
     setFotoPrincipal(evento.target.files[0]);
-  };
+  }; // escolher a foto principal
 
   const escolherFotos = (evento) => {
     const arquivos = Array.from(evento.target.files);
@@ -30,10 +32,12 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
     }
 
     setFotosCarrossel(arquivos);
-  };
+  };// escolher as fotos do carrosel
+//Funções
 
-  // Pré-visualização
 
+// Pré-visualização
+  //Mostrar a Pagina que o Cliente preencheu
   if (visualizando) {
     return (
       <div>
@@ -53,8 +57,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
 
         <p>Música: {musica}</p>
 
-        {/* CARROSSEL */}
-
+      {/* CARROSSEL */}
         <div>
           <p>Fotos do carrossel:</p>
 
@@ -112,7 +115,9 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
               mensagem: mensagem,
             };
             enviarExperiencia(dadosExperiencia);
-          }}
+          }
+        //Botão que envia as informações
+        }
         >
           Enviar experiência
         </button>
@@ -121,7 +126,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
     );
   }
 
-  // Formulário
+// Formulário que o cliente recebe pra preencher
 
   return (
     <div>
@@ -129,7 +134,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
 
       <p>Preencha os dados para criar sua experiência.</p>
 
-      {/* FOTO PRINCIPAL */}
+{/* FOTO PRINCIPAL */}
 
       <div>
         <label htmlFor="fotoPrincipal">Escolha a foto principal</label>
@@ -144,7 +149,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
         {fotoPrincipal && <p>Foto selecionada: {fotoPrincipal.name}</p>}
       </div>
 
-      {/* MÚSICA */}
+{/* MÚSICA */}
 
       <div>
         <label htmlFor="musica">Escolha uma música</label>
@@ -166,7 +171,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
         {musica && <p>Música selecionada: {musica}</p>}
       </div>
 
-      {/* CARROSSEL */}
+{/* CARROSSEL */}
 
       <div>
         <label htmlFor="fotosCarrossel">Escolha as fotos do carrossel</label>
@@ -184,7 +189,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
         )}
       </div>
 
-      {/* CONTADOR */}
+{/* CONTADOR */}
 
       <div>
         <label>
@@ -210,7 +215,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
         )}
       </div>
 
-      {/* MENSAGEM */}
+{/* MENSAGEM */}
 
       <div>
         <label htmlFor="mensagem">Mensagem final</label>
@@ -227,7 +232,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
         <p>{mensagem.length}/1000 caracteres</p>
       </div>
 
-      {/* VISUALIZAÇÃO */}
+{/* VISUALIZAÇÃO */}
 
       <button
         onClick={() => {
