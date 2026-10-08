@@ -189,11 +189,10 @@ function Painel({ sair }) {
                       onClick={() => {
                         setIdClienteAtual(solicitacao.id);
                         setMostrarCliente(true);
-                        className =
-                          "mt-3 rounded-lg bg-pink-600 px-4 py-2 text-white";
                       }}
+                      className="mt-3 rounded-lg bg-pink-600 px-4 py-2 text-white"
                     >
-                      Abrir tela do Cliente
+                      Abrir tela do cliente
                     </button>
                     <div>
                       <p className="text-sm text-slate-500">Cliente</p>

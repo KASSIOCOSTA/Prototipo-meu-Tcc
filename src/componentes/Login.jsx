@@ -1,11 +1,13 @@
 import { useState } from "react";
 import Painel from "./Painel";
+import Cadastro from "./Cadastro";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [logado, setLogado] = useState(false);
   const [erro, setErro] = useState("");
+  const [mostrarCadastro, setMostrarCadastro]=useState(false)
 
   const menuLogin = () => {
     setLogado(false);
@@ -18,7 +20,10 @@ function Login() {
   return (
     <main className="min-h-screen bg-[#fff8fa] flex items-center justify-center px-4">
       <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        {logado ? (
+        {mostrarCadastro?(
+          <Cadastro/>
+        ):
+        logado ? (
           <>
             <Painel sair={menuLogin} />
           </>
@@ -120,6 +125,10 @@ function Login() {
               <a
                 href="#"
                 className="ml-1 font-semibold text-[#6c233d] hover:underline"
+                onClick={(evento)=>{
+                  evento.preventDefault()
+                  setMostrarCadastro(true)
+                }}
               >
                 Criar conta
               </a>
