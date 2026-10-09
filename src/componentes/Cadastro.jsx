@@ -13,18 +13,21 @@ function Cadastro() {
 
 //funções
   function verificacao() {
+    setErro('')
     if (nomeEmpresa === "") {
       setErro("Digite o nome da Empresa");
     } else if (responsavel === "") {
       setErro("Digite o nome do Responsavel");
-    } else if (email === "") {
-      setErro("Digite seu E-mail");
+    } else if (!email.includes('@')) {
+      setErro("O e-mail precisa conter @");
     } else if (senha === "" || confirmarSenha === "") {
       setErro("Preencha as senhas");
     } else if (senha != confirmarSenha) {
       setErro("As senhas Precisam ser igual");
     } else if (logo === null) {
       setErro("Adicionar uma foto para o Logo");
+    }else{
+      alert('Todos os dados estão corretos!')
     }
   } //verificar se os campos foram preenchido
 
@@ -35,28 +38,31 @@ function Cadastro() {
     <main>
       <h1>Criar conta</h1>
       <p>{erro}</p>
-
+      <label htmlFor="nomeEmpresa">Nome da Empresa:</label>
       <input
+        id="nomeEmpresa"
         type="text"
-        placeholder="Nome da Empresa"
+        placeholder="Digite o nome da Empresa"
         value={nomeEmpresa}
         onChange={(evento) => {
           setNomeEmpresa(evento.target.value);
           setErro("");
         }}
       />
-
+      <label htmlFor="responsavel">Nome do Responsavel:</label>
       <input
+        id="responsavel"
         type="text"
-        placeholder="Nome do Responsavel"
+        placeholder="Digite o nome do Responsavel"
         value={responsavel}
         onChange={(evento) => {
           setResponsavel(evento.target.value);
           setErro("");
         }}
       />
-
+      <label htmlFor="email">E-mail:</label>
       <input
+        id="email"
         type="email"
         placeholder="Digite seu e-mail"
         value={email}
@@ -65,8 +71,9 @@ function Cadastro() {
           setErro("");
         }}
       />
-
+      <label htmlFor="senha">Senha:</label>
       <input
+        id="senha"
         type="password"
         placeholder="Digite sua senha"
         value={senha}
@@ -75,8 +82,9 @@ function Cadastro() {
           setErro("");
         }}
       />
-
+      <label htmlFor="confirmarSenha">Confirme sua senha:</label>
       <input
+        id="confirmarSenha"
         type="password"
         placeholder="Confirmar sua senha"
         value={confirmarSenha}
@@ -85,11 +93,13 @@ function Cadastro() {
           setErro("");
         }}
       />
-
+      <label htmlFor="perfil">Coloque sua logo:</label>
       <input
+        id="perfil"
         type="file"
         onChange={(evento) => {
           setLogo(evento.target.files[0]);
+          setErro('')
         }}
       />
       <button type="submit" onClick={verificacao}>
