@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 function Cadastro() {
-//useStates
+  //useStates
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [responsavel, setResponsavel] = useState("");
   const [email, setEmail] = useState("");
@@ -9,30 +9,35 @@ function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [logo, setLogo] = useState(null);
   const [erro, setErro] = useState("");
-//useStates
+  //useStates
 
-//funções
+  //funções
   function verificacao() {
-    setErro('')
-    if (nomeEmpresa === "") {
+    setErro("");
+    if (nomeEmpresa.trim() === "") {
       setErro("Digite o nome da Empresa");
-    } else if (responsavel === "") {
+    } else if (responsavel.trim() === "") {
       setErro("Digite o nome do Responsavel");
-    } else if (!email.includes('@')) {
+    } else if (email == "") {
+      setErro("E-mail vazio, por favor preencher o e-mail");
+    } else if (!email.includes("@")) {
       setErro("O e-mail precisa conter @");
+    } else if (!email.includes(".")) {
+      setErro("O e-mail precisa conter '.com'");
     } else if (senha === "" || confirmarSenha === "") {
       setErro("Preencha as senhas");
+    } else if (senha.length < 6) {
+      setErro("Senha no minimo 6 caracteres");
     } else if (senha != confirmarSenha) {
       setErro("As senhas Precisam ser igual");
     } else if (logo === null) {
       setErro("Adicionar uma foto para o Logo");
-    }else{
-      alert('Todos os dados estão corretos!')
+    } else {
+      alert("Todos os dados estão corretos!");
     }
   } //verificar se os campos foram preenchido
 
-//funções
-
+  //funções
 
   return (
     <main>
@@ -99,7 +104,7 @@ function Cadastro() {
         type="file"
         onChange={(evento) => {
           setLogo(evento.target.files[0]);
-          setErro('')
+          setErro("");
         }}
       />
       <button type="submit" onClick={verificacao}>
