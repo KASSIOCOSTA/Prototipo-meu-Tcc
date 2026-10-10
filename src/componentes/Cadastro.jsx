@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "../lib/supabase";
 
 function Cadastro() {
   //useStates
@@ -12,7 +13,7 @@ function Cadastro() {
   //useStates
 
   //funções
-  function verificacao() {
+  async function verificacao() {
     setErro("");
     if (nomeEmpresa.trim() === "") {
       setErro("Digite o nome da Empresa");
@@ -33,16 +34,24 @@ function Cadastro() {
     } else if (logo === null) {
       setErro("Adicionar uma foto para o Logo");
     } else {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password: senha,
+      });
+      if (error) {
+        setErro(error.message);
+        return;
+      }
+      
+      console.log("Conta criada:", data.user?.id);
       const dadosEmpresa = {
         nome: nomeEmpresa,
         responsavel: responsavel,
         email: email.toLowerCase(),
-        senha:senha,
-        logo:logo
+        senha: senha,
+        logo: logo,
       };
-      console.log(dadosEmpresa)
     }
-
   } //verificar se os campos foram preenchido
 
   //funções
