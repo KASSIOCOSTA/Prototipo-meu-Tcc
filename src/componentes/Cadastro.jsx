@@ -23,7 +23,7 @@ function Cadastro() {
     } else if (!email.includes("@")) {
       setErro("O e-mail precisa conter @");
     } else if (!email.includes(".")) {
-      setErro("O e-mail precisa conter '.com'");
+      setErro("O e-mail precisa conter um ponto");
     } else if (senha === "" || confirmarSenha === "") {
       setErro("Preencha as senhas");
     } else if (senha.length < 6) {
@@ -33,8 +33,16 @@ function Cadastro() {
     } else if (logo === null) {
       setErro("Adicionar uma foto para o Logo");
     } else {
-      alert("Todos os dados estão corretos!");
+      const dadosEmpresa = {
+        nome: nomeEmpresa,
+        responsavel: responsavel,
+        email: email.toLowerCase(),
+        senha:senha,
+        logo:logo
+      };
+      console.log(dadosEmpresa)
     }
+
   } //verificar se os campos foram preenchido
 
   //funções
