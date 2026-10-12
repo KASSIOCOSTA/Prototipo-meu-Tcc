@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
-function Cadastro() {
+function Cadastro({ voltarLogin }) {
   //useStates
   const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [responsavel, setResponsavel] = useState("");
@@ -60,6 +60,9 @@ function Cadastro() {
   return (
     <main>
       <h1>Criar conta</h1>
+      <button type="button" onClick={voltarLogin}>
+      Voltar para o login
+    </button>
       <p>{erro}</p>
       <p>{sucesso}</p>
       <label htmlFor="nomeEmpresa">Nome da Empresa:</label>

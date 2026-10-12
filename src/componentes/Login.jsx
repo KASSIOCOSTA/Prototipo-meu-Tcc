@@ -1,29 +1,28 @@
 import { useState } from "react";
 import Painel from "./Painel";
 import Cadastro from "./Cadastro";
+import { supabase } from "../lib/supabase";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [logado, setLogado] = useState(false);
   const [erro, setErro] = useState("");
-  const [mostrarCadastro, setMostrarCadastro]=useState(false)
+  const [mostrarCadastro, setMostrarCadastro] = useState(false);
 
   const menuLogin = () => {
     setLogado(false);
     setErro("");
   };
 
-  const emailCorreto = "k@gmail.com";
-  const senhaCorreta = "123456";
+
 
   return (
     <main className="min-h-screen bg-[#fff8fa] flex items-center justify-center px-4">
       <section className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        {mostrarCadastro?(
-          <Cadastro/>
-        ):
-        logado ? (
+        {mostrarCadastro ? (
+          <Cadastro voltarLogin={() => setMostrarCadastro(false)} />
+        ) : logado ? (
           <>
             <Painel sair={menuLogin} />
           </>
@@ -40,7 +39,7 @@ function Login() {
 
             <form
               className="space-y-5"
-              onSubmit={(evento) => {
+              onSubmit={async (evento) => {
                 evento.preventDefault();
 
                 if (email === "" && senha === "") {
@@ -52,14 +51,16 @@ function Login() {
                 } else if (senha.length < 6) {
                   setErro("Senha invalida Min 6 caracteres");
                 } else {
-                  if (
-                    email.toLowerCase() === emailCorreto &&
-                    senha === senhaCorreta
-                  ) {
+                  const { error } = await supabase.auth.signInWithPassword({
+                    email: email.trim().toLowerCase(),
+                    password: senha,
+                  });
+
+                  if (error) {
+                    setErro("E-mail ou senha inválidos.");
+                  } else {
                     setLogado(true);
                     setErro("");
-                  } else {
-                    setErro("Senha ou usuario invalido");
                   }
                 }
               }}
@@ -125,9 +126,9 @@ function Login() {
               <a
                 href="#"
                 className="ml-1 font-semibold text-[#6c233d] hover:underline"
-                onClick={(evento)=>{
-                  evento.preventDefault()
-                  setMostrarCadastro(true)
+                onClick={(evento) => {
+                  evento.preventDefault();
+                  setMostrarCadastro(true);
                 }}
               >
                 Criar conta
