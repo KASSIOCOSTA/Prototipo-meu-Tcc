@@ -10,11 +10,13 @@ function Cadastro() {
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [logo, setLogo] = useState(null);
   const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
   //useStates
 
   //funções
   async function verificacao() {
     setErro("");
+    setSucesso("");
     if (nomeEmpresa.trim() === "") {
       setErro("Digite o nome da Empresa");
     } else if (responsavel.trim() === "") {
@@ -37,20 +39,19 @@ function Cadastro() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password: senha,
+        options: {
+          data: {
+            nome_empresa: nomeEmpresa.trim(),
+            responsavel: responsavel.trim(),
+          },
+        },
       });
       if (error) {
         setErro(error.message);
         return;
       }
-      
-      console.log("Conta criada:", data.user?.id);
-      const dadosEmpresa = {
-        nome: nomeEmpresa,
-        responsavel: responsavel,
-        email: email.toLowerCase(),
-        senha: senha,
-        logo: logo,
-      };
+
+      setSucesso("Conta criada! Confira seu e-mail para confirmar o cadastro.");
     }
   } //verificar se os campos foram preenchido
 
@@ -60,6 +61,7 @@ function Cadastro() {
     <main>
       <h1>Criar conta</h1>
       <p>{erro}</p>
+      <p>{sucesso}</p>
       <label htmlFor="nomeEmpresa">Nome da Empresa:</label>
       <input
         id="nomeEmpresa"
