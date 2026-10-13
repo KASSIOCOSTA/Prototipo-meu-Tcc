@@ -33,8 +33,6 @@ function Cadastro({ voltarLogin }) {
       setErro("Senha no minimo 6 caracteres");
     } else if (senha != confirmarSenha) {
       setErro("As senhas Precisam ser igual");
-    } else if (logo === null) {
-      setErro("Adicionar uma foto para o Logo");
     } else {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
@@ -61,8 +59,8 @@ function Cadastro({ voltarLogin }) {
     <main>
       <h1>Criar conta</h1>
       <button type="button" onClick={voltarLogin}>
-      Voltar para o login
-    </button>
+        Voltar para o login
+      </button>
       <p>{erro}</p>
       <p>{sucesso}</p>
       <label htmlFor="nomeEmpresa">Nome da Empresa:</label>
