@@ -16,32 +16,47 @@ function Login() {
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarNovaSenha, setConfirmarNovaSenha] = useState("");
 
-  const menuLogin = () => {
+  const menuLogin = async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error("Erro ao sair:", error);
+      setErro("Não foi possível encerrar a sessão.");
+      return;
+    }
+
     setLogado(false);
+    setSenha("");
     setErro("");
   };
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((evento) => {
-      if (evento === "SIGNED_IN" || evento === "INITIAL_SESSION") {
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session && evento !== "PASSWORD_RECOVERY") {
-      setLogado(true);
-    }
-  });
-}
+    } = supabase.auth.onAuthStateChange((evento, session) => {
       if (evento === "PASSWORD_RECOVERY") {
+        setLogado(false);
         setMostrarRecuperacao(false);
         setMostrarNovaSenha(true);
         setErro("");
         setMensagem("");
+        return;
+      }
+
+      if (evento === "SIGNED_OUT") {
+        setLogado(false);
+        return;
+      }
+
+      if (evento === "INITIAL_SESSION") {
+        setLogado(!!session);
+      }
+
+      if (evento === "SIGNED_IN") {
+        setLogado(true);
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
   async function recuperarSenha(evento) {
     evento.preventDefault();
@@ -89,16 +104,25 @@ function Login() {
     setCarregando(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
-     if (error) {
-  console.error("Erro do Supabase:", error);
-  setErro("Não foi possível enviar o e-mail. Tente novamente.");
-  return;
-}
-      setMensagem(
-        "Senha alterada com sucesso! Você já pode entrar com a nova senha.",
-      );
+      if (error) {
+        console.error("Erro ao atualizar senha:", error);
+        setErro("Não foi possível atualizar a senha. Tente novamente.");
+        return;
+      }
+      const { error: erroSair } = await supabase.auth.signOut();
+
+      if (erroSair) {
+        setErro("Senha alterada, mas não foi possível encerrar a sessão.");
+        return;
+      }
+
+      setMostrarNovaSenha(false);
+      setLogado(false);
+      setSenha("");
       setNovaSenha("");
       setConfirmarNovaSenha("");
+      setErro("");
+      setMensagem("");
     } catch {
       setErro("Ocorreu um erro. Tente novamente.");
     } finally {
