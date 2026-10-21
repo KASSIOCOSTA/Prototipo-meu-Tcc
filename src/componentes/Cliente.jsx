@@ -1,4 +1,5 @@
 import { useState } from "react";
+import imageCompression from "browser-image-compression";
 
 function Cliente({ enviarExperiencia, voltar, idCliente }) {
 //useStates
@@ -14,25 +15,70 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
 
 // Funções
 
-  const escolherFoto = (evento) => {
-    setFotoPrincipal(evento.target.files[0]);
-  }; // escolher a foto principal
+ const escolherFoto = async (evento) => {
+  const arquivo = evento.target.files[0];
 
-  const escolherFotos = (evento) => {
-    const arquivos = Array.from(evento.target.files);
+  if (!arquivo) return;
 
-    if (arquivos.length < 3) {
-      alert("Escolha no mínimo 3 fotos.");
-      return;
-    }
+  const opcoes = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  };
 
-    if (arquivos.length > 10) {
-      alert("Escolha no máximo 10 fotos.");
-      return;
-    }
+  try {
+    const fotoComprimida = await imageCompression(arquivo, opcoes);
 
-    setFotosCarrossel(arquivos);
-  };// escolher as fotos do carrosel
+    setFotoPrincipal(fotoComprimida);
+
+    console.log("Tamanho original:", arquivo.size);
+    console.log("Tamanho comprimido:", fotoComprimida.size);
+  } catch (erro) {
+    console.error("Erro ao comprimir a foto:", erro);
+    alert("Não foi possível processar a imagem.");
+  }
+};// escolher a foto principal
+
+  const escolherFotos = async (evento) => {
+  const arquivos = Array.from(evento.target.files);
+
+  if (arquivos.length < 3) {
+    alert("Escolha no mínimo 3 fotos.");
+    return;
+  }
+
+  if (arquivos.length > 10) {
+    alert("Escolha no máximo 10 fotos.");
+    return;
+  }
+
+  const opcoes = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+  };
+
+  try {
+    const fotosComprimidas = await Promise.all(
+      arquivos.map(async (arquivo) => {
+        const fotoComprimida = await imageCompression(arquivo, opcoes);
+
+        console.log(
+          `${arquivo.name}: ${arquivo.size} → ${fotoComprimida.size} bytes`
+        );
+
+        return fotoComprimida;
+      })
+    );
+
+    setFotosCarrossel(fotosComprimidas);
+    setFotoAtual(0);
+
+  } catch (erro) {
+    console.error("Erro ao comprimir as fotos:", erro);
+    alert("Não foi possível processar as imagens.");
+  }
+};// escolher as fotos do carrosel
 //Funções
 
 
