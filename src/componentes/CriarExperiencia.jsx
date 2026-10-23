@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import { supabase } from "../lib/supabase";
 
 function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
   // useStates
@@ -7,23 +8,70 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
   const [erro, setErro] = useState("");
   const [link, setLink] = useState("");
   const [qrCode, setQrCode] = useState("");
+  const [gerando, setGerando] = useState(false);
   // useStates
 
   //funções
   // Gerar link
-  const gerarLink = () => {
-    if (nomeCliente === "") {
-      setErro("Digite o nome do Cliente");
-    } else {
-      const id = crypto.randomUUID();
-      const novoLink = `https://nossoapp.com/p/${id}`;
+  const gerarLink = async () => {
+    const nome = nomeCliente.trim();
+
+    if (nome === "") {
+      setErro("Digite o nome do cliente");
+      return;
+    }
+    if (gerando || link) return;
+
+    setGerando(true);
+    setErro("");
+
+    try {
+      // Identifica a empresa que está logada
+      const {
+        data: { user },
+        error: erroUsuario,
+      } = await supabase.auth.getUser();
+
+      if (erroUsuario || !user) {
+        setErro("Você precisa estar logado para criar uma solicitação.");
+        return;
+      }
+
+      // Salva a solicitação no banco de dados
+      const { data, error } = await supabase
+        .from("solicitacoes")
+        .insert({
+          empresa_id: user.id,
+          nome_cliente: nome.toUpperCase(),
+          status: "Pendente",
+        })
+        .select("id, nome_cliente, status, token_cliente")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Cria o link usando o token gerado pelo Supabase
+      const novoLink = `${window.location.origin}/p/${data.token_cliente}`;
+
       setLink(novoLink);
       setQrCode(novoLink);
+
+      // Atualiza temporariamente a lista do painel
       adicionarSolicitacoes({
-        id: id,
-        nome: nomeCliente.toLocaleUpperCase(),
+        id: data.id,
+        token_cliente: data.token_cliente,
+        nome: data.nome_cliente,
         status: "Personalização pendente",
       });
+
+      console.log("Solicitação salva no Supabase:", data);
+    } catch (erro) {
+      console.error("Erro ao criar solicitação:", erro);
+      setErro("Não foi possível criar a solicitação.");
+    } finally {
+      setGerando(false);
     }
   };
 
@@ -94,12 +142,19 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
           )}
 
           {/* Botão gerar */}
-          <button
-            onClick={gerarLink}
-            className="mt-5 w-full rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.99]"
-          >
-            Gerar link
-          </button>
+          {!link && (
+            <button
+              onClick={gerarLink}
+              disabled={gerando}
+              className={`mt-5 w-full rounded-xl px-5 py-3 font-semibold text-white transition ${
+                gerando
+                  ? "cursor-not-allowed bg-slate-400"
+                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99]"
+              }`}
+            >
+              {gerando ? "Gerando link..." : "Gerar link"}
+            </button>
+          )}
 
           {/* Resultado */}
           {link && (

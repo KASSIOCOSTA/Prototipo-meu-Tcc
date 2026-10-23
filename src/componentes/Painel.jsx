@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LogoEmpresa from "./LogoEmpresa";
 import CriarExperiencia from "./CriarExperiencia";
 import Cliente from "./Cliente";
+import { supabase } from "../lib/supabase";
 
 function Painel({ sair }) {
   const [criando, setCriando] = useState(false);
@@ -42,6 +43,46 @@ function Painel({ sair }) {
 
     console.log("Experiência enviada");
   };
+  const carregarSolicitacoes = async () => {
+  try {
+    const {
+      data: { user },
+      error: erroUsuario,
+    } = await supabase.auth.getUser();
+
+    if (erroUsuario || !user) {
+      console.error("Usuário não autenticado:", erroUsuario);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("solicitacoes")
+      .select("id, token_cliente, nome_cliente, status, criado_em")
+      .eq("empresa_id", user.id)
+      .order("criado_em", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    const solicitacoesFormatadas = data.map((solicitacao) => ({
+      id: solicitacao.id,
+      token_cliente: solicitacao.token_cliente,
+      nome: solicitacao.nome_cliente,
+      status:
+        solicitacao.status === "Pendente"
+          ? "Personalização pendente"
+          : solicitacao.status,
+    }));
+
+    setSolicitacoes(solicitacoesFormatadas);
+  } catch (erro) {
+    console.error("Erro ao carregar solicitações:", erro);
+  }
+};
+useEffect(() => {
+  carregarSolicitacoes();
+}, []);
 
   //funções
 
