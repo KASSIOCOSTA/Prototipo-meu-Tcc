@@ -251,7 +251,7 @@ useEffect(() => {
                   >
                     <button
                       onClick={() => {
-                        setIdClienteAtual(solicitacao.id);
+                        setIdClienteAtual(solicitacao.token_cliente);
                         setMostrarCliente(true);
                       }}
                       className="mt-3 rounded-lg bg-pink-600 px-4 py-2 text-white"

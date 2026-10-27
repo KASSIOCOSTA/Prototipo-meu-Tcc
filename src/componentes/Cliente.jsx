@@ -14,6 +14,47 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
 //useStates
 
 // Funções
+const enviarParaSupabase = async () => {
+  try {
+    const formData = new FormData();
+
+    formData.append("token", idCliente);
+    formData.append("musica", musica);
+    formData.append("mensagem", mensagem);
+    formData.append("usarContador", String(usarContador));
+    formData.append("dataInicio", dataInicio);
+
+    formData.append("fotoPrincipal", fotoPrincipal);
+
+    fotosCarrossel.forEach((foto) => {
+      formData.append("fotosCarrossel", foto);
+    });
+
+    const resposta = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enviar-experiencia`,
+      {
+        method: "POST",
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: formData,
+      },
+    );
+
+    const resultado = await resposta.json();
+
+    if (!resposta.ok) {
+      throw new Error(resultado.erro || "Erro ao enviar a experiência.");
+    }
+
+    console.log("Resposta da Edge Function:", resultado);
+    alert("Dados enviados para a função com sucesso!");
+
+  } catch (erro) {
+    console.error("Erro ao enviar experiência:", erro);
+    alert(erro.message || "Não foi possível enviar a experiência.");
+  }
+};
 
  const escolherFoto = async (evento) => {
   const arquivo = evento.target.files[0];
@@ -149,21 +190,9 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
         <button onClick={() => setVisualizando(false)}>
           Voltar para editar
         </button>
-        <button
-          onClick={() => {
-            const dadosExperiencia = {
-              idCliente: idCliente,
-              fotoPrincipal: fotoPrincipal,
-              musica: musica,
-              fotosCarrossel: fotosCarrossel,
-              usarContador: usarContador,
-              dataInicio: dataInicio,
-              mensagem: mensagem,
-            };
-            enviarExperiencia(dadosExperiencia);
-          }
+        <button onClick={enviarParaSupabase}
+          
         //Botão que envia as informações
-        }
         >
           Enviar experiência
         </button>
