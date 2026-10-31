@@ -1,0 +1,301 @@
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+function Presenteado() {
+  const { token } = useParams();
+
+  const [experiencia, setExperiencia] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [fotoAtual, setFotoAtual] = useState(0);
+  const [virando, setVirando] = useState(false);
+const [direcao, setDirecao] = useState("direita");
+const [inicioToque, setInicioToque] = useState(0);
+function mudarFoto(novaDirecao) {
+  if (virando) return;
+
+  setDirecao(novaDirecao);
+  setVirando(true);
+
+  setTimeout(() => {
+    setFotoAtual((atual) => {
+      const total = experiencia.fotos_carrossel.length;
+
+      if (novaDirecao === "direita") {
+        return atual === total - 1 ? 0 : atual + 1;
+      }
+
+      return atual === 0 ? total - 1 : atual - 1;
+    });
+
+    setVirando(false);
+  }, 500);
+}
+
+  useEffect(() => {
+    async function carregarPresente() {
+      try {
+        setCarregando(true);
+        setErro("");
+
+        const resposta = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/consultar-presente`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            },
+            body: JSON.stringify({ token }),
+          },
+        );
+
+        const resultado = await resposta.json();
+
+        if (!resposta.ok) {
+          throw new Error(
+            resultado.erro || "Não foi possível carregar o presente.",
+          );
+        }
+
+        setExperiencia(resultado.experiencia);
+      } catch (erro) {
+        console.error("Erro ao carregar presente:", erro);
+        setErro(erro.message || "Não foi possível carregar o presente.");
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    if (token) {
+      carregarPresente();
+    } else {
+      setErro("Link do presente inválido.");
+      setCarregando(false);
+    }
+  }, [token]);
+
+  if (carregando) {
+  return (
+    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+      <p className="text-zinc-300">Preparando seu presente... 🎁</p>
+    </main>
+  );
+}
+
+if (erro) {
+  return (
+    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+      <p className="text-center text-red-400">{erro}</p>
+    </main>
+  );
+}
+
+if (!experiencia) {
+  return (
+    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+      <p className="text-center text-zinc-300">
+        Não encontramos os dados deste presente.
+      </p>
+    </main>
+  );
+}
+
+  return (
+    <main className="min-h-screen bg-zinc-950 text-white px-4 py-8 flex flex-col items-center gap-10">
+      {/* Foto principal e música */}
+      <section className="w-full max-w-sm flex flex-col items-center">
+        <h2 className="text-xl font-semibold mb-5">Nossa música 🎵</h2>
+
+        <div className="w-full aspect-square rounded-2xl bg-zinc-800 shadow-lg overflow-hidden">
+  <img
+    src={experiencia.foto_principal}
+    alt="Foto principal do presente"
+    className="w-full h-full object-cover"
+  />
+</div>
+
+        <div className="w-full mt-5">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold">Nossa canção</h3>
+            <p className="text-sm text-zinc-400">
+              Uma música especial para você
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-8">
+            <button
+              type="button"
+              disabled
+              className="text-2xl text-zinc-600 cursor-not-allowed"
+              aria-label="Música anterior"
+            >
+              ⏮
+            </button>
+
+            <button
+              type="button"
+              className="w-14 h-14 rounded-full bg-white text-black text-2xl flex items-center justify-center"
+              aria-label="Reproduzir música"
+            >
+              ▶
+            </button>
+
+            <button
+              type="button"
+              disabled
+              className="text-2xl text-zinc-600 cursor-not-allowed"
+              aria-label="Próxima música"
+            >
+              ⏭
+            </button>
+          </div>
+
+          <div className="mt-5">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              defaultValue="0"
+              className="w-full accent-white"
+              aria-label="Progresso da música"
+            />
+
+            <div className="flex justify-between text-xs text-zinc-400">
+              <span>0:00</span>
+              <span>0:00</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Carrossel de fotos */}
+      <section className="w-full max-w-sm">
+        <h2 className="text-xl font-semibold text-center mb-5">
+          Nossas lembranças 📸
+        </h2>
+
+        <div
+  className="relative w-full aspect-[4/5] rounded-2xl bg-zinc-800 shadow-lg"
+  style={{ perspective: "1200px" }}
+  onTouchStart={(evento) => {
+  setInicioToque(evento.touches[0].clientX);
+}}
+
+onTouchEnd={(evento) => {
+  const fimToque = evento.changedTouches[0].clientX;
+  const distancia = fimToque - inicioToque;
+
+  if (Math.abs(distancia) < 50) return;
+
+  if (distancia < 0) {
+    mudarFoto("direita");
+  } else {
+    mudarFoto("esquerda");
+  }
+}}
+>       
+<img
+  src={
+    experiencia.fotos_carrossel[
+      direcao === "direita"
+        ? (fotoAtual + 1) % experiencia.fotos_carrossel.length
+        : (fotoAtual - 1 + experiencia.fotos_carrossel.length) %
+            experiencia.fotos_carrossel.length
+    ]
+  }
+  alt="Próxima lembrança"
+  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+  
+/>
+
+
+
+         <img
+  src={experiencia.fotos_carrossel[fotoAtual]}
+  alt={`Lembrança ${fotoAtual + 1}`}
+  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+  style={{
+    transformOrigin: "left center",
+    transform: virando
+      ? `rotateY(${direcao === "direita" ? "-180deg" : "180deg"})`
+      : "rotateY(0deg)",
+    transition: virando ? "transform 1000ms ease-in-out" : "none",
+    backfaceVisibility: "hidden",
+  }}
+/>
+
+<button
+  type="button"
+  onClick={() => mudarFoto("esquerda")}
+  disabled={virando}
+  className="absolute left-3 w-10 h-10 rounded-full bg-black/60 text-white text-xl"
+  aria-label="Foto anterior"
+>
+  ❮
+</button>
+
+<button
+  type="button"
+  onClick={() => mudarFoto("direita")}
+  disabled={virando}
+  className="absolute right-3 w-10 h-10 rounded-full bg-black/60 text-white text-xl"
+  aria-label="Próxima foto"
+>
+  ❯
+</button>
+        </div>
+
+        <div className="flex justify-center gap-2 mt-4">
+          <span className="w-2 h-2 rounded-full bg-white"></span>
+          <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
+          <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
+        </div>
+      </section>
+
+      {/* Contador */}
+      <section className="w-full max-w-sm text-center">
+        <p className="text-zinc-400 text-sm mb-2">
+          Você é especial para mim há...
+        </p>
+
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-zinc-900 rounded-xl p-3">
+            <span className="block text-2xl font-bold">12</span>
+            <span className="text-xs text-zinc-400">Dias</span>
+          </div>
+
+          <div className="bg-zinc-900 rounded-xl p-3">
+            <span className="block text-2xl font-bold">08</span>
+            <span className="text-xs text-zinc-400">Horas</span>
+          </div>
+
+          <div className="bg-zinc-900 rounded-xl p-3">
+            <span className="block text-2xl font-bold">35</span>
+            <span className="text-xs text-zinc-400">Minutos</span>
+          </div>
+
+          <div className="bg-zinc-900 rounded-xl p-3">
+            <span className="block text-2xl font-bold">42</span>
+            <span className="text-xs text-zinc-400">Segundos</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Mensagem */}
+      <section className="w-full max-w-sm pb-10">
+        <h2 className="text-xl font-semibold text-center mb-5">
+          Uma mensagem para você ❤️
+        </h2>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+          <p className="text-zinc-300 leading-7 whitespace-pre-wrap">
+  {experiencia.mensagem}
+</p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default Presenteado;

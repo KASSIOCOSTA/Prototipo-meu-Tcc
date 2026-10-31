@@ -1,8 +1,8 @@
 import { useState } from "react";
 import imageCompression from "browser-image-compression";
 
-function Cliente({ enviarExperiencia, voltar, idCliente }) {
-//useStates
+function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
+  //useStates
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [musica, setMusica] = useState("");
   const [fotosCarrossel, setFotosCarrossel] = useState([]);
@@ -11,119 +11,120 @@ function Cliente({ enviarExperiencia, voltar, idCliente }) {
   const [mensagem, setMensagem] = useState("");
   const [visualizando, setVisualizando] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(0);
-//useStates
+  //useStates
 
-// Funções
-const enviarParaSupabase = async () => {
-  try {
-    const formData = new FormData();
+  // Funções
+  const enviarParaSupabase = async () => {
+    try {
+      const formData = new FormData();
 
-    formData.append("token", idCliente);
-    formData.append("musica", musica);
-    formData.append("mensagem", mensagem);
-    formData.append("usarContador", String(usarContador));
-    formData.append("dataInicio", dataInicio);
+      formData.append("token", idCliente);
+      formData.append("musica", musica);
+      formData.append("mensagem", mensagem);
+      formData.append("usarContador", String(usarContador));
+      formData.append("dataInicio", dataInicio);
 
-    formData.append("fotoPrincipal", fotoPrincipal);
+      formData.append("fotoPrincipal", fotoPrincipal);
 
-    fotosCarrossel.forEach((foto) => {
-      formData.append("fotosCarrossel", foto);
-    });
+      fotosCarrossel.forEach((foto) => {
+        formData.append("fotosCarrossel", foto);
+      });
 
-    const resposta = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enviar-experiencia`,
-      {
-        method: "POST",
-        headers: {
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      const resposta = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enviar-experiencia`,
+        {
+          method: "POST",
+          headers: {
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: formData,
         },
-        body: formData,
-      },
-    );
+      );
 
-    const resultado = await resposta.json();
+      const resultado = await resposta.json();
 
-    if (!resposta.ok) {
-      throw new Error(resultado.erro || "Erro ao enviar a experiência.");
+      if (!resposta.ok) {
+        throw new Error(resultado.erro || "Erro ao enviar a experiência.");
+      }
+
+      console.log("Resposta da Edge Function:", resultado);
+      alert("Dados enviados para a função com sucesso!");
+      // Avisar ao painel que o envio terminou
+      if (aoEnviarSucesso) {
+        aoEnviarSucesso();
+      }
+    } catch (erro) {
+      console.error("Erro ao enviar experiência:", erro);
+      alert(erro.message || "Não foi possível enviar a experiência.");
     }
-
-    console.log("Resposta da Edge Function:", resultado);
-    alert("Dados enviados para a função com sucesso!");
-
-  } catch (erro) {
-    console.error("Erro ao enviar experiência:", erro);
-    alert(erro.message || "Não foi possível enviar a experiência.");
-  }
-};
-
- const escolherFoto = async (evento) => {
-  const arquivo = evento.target.files[0];
-
-  if (!arquivo) return;
-
-  const opcoes = {
-    maxSizeMB: 1,
-    maxWidthOrHeight: 1920,
-    useWebWorker: true,
   };
 
-  try {
-    const fotoComprimida = await imageCompression(arquivo, opcoes);
+  const escolherFoto = async (evento) => {
+    const arquivo = evento.target.files[0];
 
-    setFotoPrincipal(fotoComprimida);
+    if (!arquivo) return;
 
-    console.log("Tamanho original:", arquivo.size);
-    console.log("Tamanho comprimido:", fotoComprimida.size);
-  } catch (erro) {
-    console.error("Erro ao comprimir a foto:", erro);
-    alert("Não foi possível processar a imagem.");
-  }
-};// escolher a foto principal
+    const opcoes = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
+
+    try {
+      const fotoComprimida = await imageCompression(arquivo, opcoes);
+
+      setFotoPrincipal(fotoComprimida);
+
+      console.log("Tamanho original:", arquivo.size);
+      console.log("Tamanho comprimido:", fotoComprimida.size);
+    } catch (erro) {
+      console.error("Erro ao comprimir a foto:", erro);
+      alert("Não foi possível processar a imagem.");
+    }
+  }; // escolher a foto principal
 
   const escolherFotos = async (evento) => {
-  const arquivos = Array.from(evento.target.files);
+    const arquivos = Array.from(evento.target.files);
 
-  if (arquivos.length < 3) {
-    alert("Escolha no mínimo 3 fotos.");
-    return;
-  }
+    if (arquivos.length < 3) {
+      alert("Escolha no mínimo 3 fotos.");
+      return;
+    }
 
-  if (arquivos.length > 10) {
-    alert("Escolha no máximo 10 fotos.");
-    return;
-  }
+    if (arquivos.length > 10) {
+      alert("Escolha no máximo 10 fotos.");
+      return;
+    }
 
-  const opcoes = {
-    maxSizeMB: 1,
-    maxWidthOrHeight: 1920,
-    useWebWorker: true,
-  };
+    const opcoes = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true,
+    };
 
-  try {
-    const fotosComprimidas = await Promise.all(
-      arquivos.map(async (arquivo) => {
-        const fotoComprimida = await imageCompression(arquivo, opcoes);
+    try {
+      const fotosComprimidas = await Promise.all(
+        arquivos.map(async (arquivo) => {
+          const fotoComprimida = await imageCompression(arquivo, opcoes);
 
-        console.log(
-          `${arquivo.name}: ${arquivo.size} → ${fotoComprimida.size} bytes`
-        );
+          console.log(
+            `${arquivo.name}: ${arquivo.size} → ${fotoComprimida.size} bytes`,
+          );
 
-        return fotoComprimida;
-      })
-    );
+          return fotoComprimida;
+        }),
+      );
 
-    setFotosCarrossel(fotosComprimidas);
-    setFotoAtual(0);
+      setFotosCarrossel(fotosComprimidas);
+      setFotoAtual(0);
+    } catch (erro) {
+      console.error("Erro ao comprimir as fotos:", erro);
+      alert("Não foi possível processar as imagens.");
+    }
+  }; // escolher as fotos do carrosel
+  //Funções
 
-  } catch (erro) {
-    console.error("Erro ao comprimir as fotos:", erro);
-    alert("Não foi possível processar as imagens.");
-  }
-};// escolher as fotos do carrosel
-//Funções
-
-
-// Pré-visualização
+  // Pré-visualização
   //Mostrar a Pagina que o Cliente preencheu
   if (visualizando) {
     return (
@@ -144,7 +145,7 @@ const enviarParaSupabase = async () => {
 
         <p>Música: {musica}</p>
 
-      {/* CARROSSEL */}
+        {/* CARROSSEL */}
         <div>
           <p>Fotos do carrossel:</p>
 
@@ -190,9 +191,10 @@ const enviarParaSupabase = async () => {
         <button onClick={() => setVisualizando(false)}>
           Voltar para editar
         </button>
-        <button onClick={enviarParaSupabase}
-          
-        //Botão que envia as informações
+        <button
+          onClick={enviarParaSupabase}
+
+          //Botão que envia as informações
         >
           Enviar experiência
         </button>
@@ -201,7 +203,7 @@ const enviarParaSupabase = async () => {
     );
   }
 
-// Formulário que o cliente recebe pra preencher
+  // Formulário que o cliente recebe pra preencher
 
   return (
     <div>
@@ -209,7 +211,7 @@ const enviarParaSupabase = async () => {
 
       <p>Preencha os dados para criar sua experiência.</p>
 
-{/* FOTO PRINCIPAL */}
+      {/* FOTO PRINCIPAL */}
 
       <div>
         <label htmlFor="fotoPrincipal">Escolha a foto principal</label>
@@ -224,7 +226,7 @@ const enviarParaSupabase = async () => {
         {fotoPrincipal && <p>Foto selecionada: {fotoPrincipal.name}</p>}
       </div>
 
-{/* MÚSICA */}
+      {/* MÚSICA */}
 
       <div>
         <label htmlFor="musica">Escolha uma música</label>
@@ -246,7 +248,7 @@ const enviarParaSupabase = async () => {
         {musica && <p>Música selecionada: {musica}</p>}
       </div>
 
-{/* CARROSSEL */}
+      {/* CARROSSEL */}
 
       <div>
         <label htmlFor="fotosCarrossel">Escolha as fotos do carrossel</label>
@@ -264,7 +266,7 @@ const enviarParaSupabase = async () => {
         )}
       </div>
 
-{/* CONTADOR */}
+      {/* CONTADOR */}
 
       <div>
         <label>
@@ -290,7 +292,7 @@ const enviarParaSupabase = async () => {
         )}
       </div>
 
-{/* MENSAGEM */}
+      {/* MENSAGEM */}
 
       <div>
         <label htmlFor="mensagem">Mensagem final</label>
@@ -307,7 +309,7 @@ const enviarParaSupabase = async () => {
         <p>{mensagem.length}/1000 caracteres</p>
       </div>
 
-{/* VISUALIZAÇÃO */}
+      {/* VISUALIZAÇÃO */}
 
       <button
         onClick={() => {

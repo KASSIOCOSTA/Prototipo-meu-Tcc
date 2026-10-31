@@ -177,6 +177,7 @@ useEffect(() => {
         enviarExperiencia={enviarExperiencia}
         voltar={voltarDoCliente}
         idCliente={idClienteAtual}
+        aoEnviarSucesso={carregarSolicitacoes}
       />
     );
   }
