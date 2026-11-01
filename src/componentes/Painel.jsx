@@ -161,7 +161,8 @@ useEffect(() => {
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Status</p>
 
-                <span className="mt-2 inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700">
+                <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-medium ${solicitacaoSelecionada.status === "Confirmado" ? 'text-green-700 bg-green-100' : 'text-amber-700 bg-amber-100'}`}>
+
                   {solicitacaoSelecionada.status}
                 </span>
               </div>
