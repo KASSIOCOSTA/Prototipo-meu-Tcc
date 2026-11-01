@@ -9,28 +9,35 @@ function Presenteado() {
   const [erro, setErro] = useState("");
   const [fotoAtual, setFotoAtual] = useState(0);
   const [virando, setVirando] = useState(false);
-const [direcao, setDirecao] = useState("direita");
-const [inicioToque, setInicioToque] = useState(0);
-function mudarFoto(novaDirecao) {
-  if (virando) return;
+  const [direcao, setDirecao] = useState("direita");
+  const [inicioToque, setInicioToque] = useState(0);
+const [tempo, setTempo] = useState({
+  dias: 0,
+  horas: 0,
+  minutos: 0,
+  segundos: 0,
+});
 
-  setDirecao(novaDirecao);
-  setVirando(true);
+  function mudarFoto(novaDirecao) {
+    if (virando) return;
 
-  setTimeout(() => {
-    setFotoAtual((atual) => {
-      const total = experiencia.fotos_carrossel.length;
+    setDirecao(novaDirecao);
+    setVirando(true);
 
-      if (novaDirecao === "direita") {
-        return atual === total - 1 ? 0 : atual + 1;
-      }
+    setTimeout(() => {
+      setFotoAtual((atual) => {
+        const total = experiencia.fotos_carrossel.length;
 
-      return atual === 0 ? total - 1 : atual - 1;
-    });
+        if (novaDirecao === "direita") {
+          return atual === total - 1 ? 0 : atual + 1;
+        }
 
-    setVirando(false);
-  }, 500);
-}
+        return atual === 0 ? total - 1 : atual - 1;
+      });
+
+      setVirando(false);
+    }, 500);
+  }
 
   useEffect(() => {
     async function carregarPresente() {
@@ -75,52 +82,95 @@ function mudarFoto(novaDirecao) {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (!experiencia || experiencia.fotos_carrossel.length <= 1 || virando) {
+      return;
+    }
+
+    const temporizador = setTimeout(() => {
+      mudarFoto("direita");
+    }, 5000);
+
+    return () => clearTimeout(temporizador);
+  }, [experiencia, fotoAtual, virando]);
+
+  useEffect(() => {
+  if (!experiencia || !experiencia.contador_ativo || !experiencia.data_contador) {
+    return;
+  }
+
+  function atualizarContador() {
+    const inicio = new Date(experiencia.data_contador).getTime();
+    const agora = Date.now();
+
+    const diferenca = Math.max(0, agora - inicio);
+
+    const segundosTotais = Math.floor(diferenca / 1000);
+
+    const dias = Math.floor(segundosTotais / 86400);
+    const horas = Math.floor((segundosTotais % 86400) / 3600);
+    const minutos = Math.floor((segundosTotais % 3600) / 60);
+    const segundos = segundosTotais % 60;
+
+    setTempo({ dias, horas, minutos, segundos });
+  }
+
+  atualizarContador();
+
+  const intervalo = setInterval(atualizarContador, 1000);
+
+  return () => clearInterval(intervalo);
+}, [experiencia]);
+
   if (carregando) {
-  return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-      <p className="text-zinc-300">Preparando seu presente... 🎁</p>
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+        <p className="text-zinc-300">Preparando seu presente... 🎁</p>
+      </main>
+    );
+  }
 
-if (erro) {
-  return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
-      <p className="text-center text-red-400">{erro}</p>
-    </main>
-  );
-}
+  if (erro) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+        <p className="text-center text-red-400">{erro}</p>
+      </main>
+    );
+  }
 
-if (!experiencia) {
-  return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
-      <p className="text-center text-zinc-300">
-        Não encontramos os dados deste presente.
-      </p>
-    </main>
-  );
-}
+  if (!experiencia) {
+    return (
+      <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+        <p className="text-center text-zinc-300">
+          Não encontramos os dados deste presente.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white px-4 py-8 flex flex-col items-center gap-10">
       {/* Foto principal e música */}
       <section className="w-full max-w-sm flex flex-col items-center">
-        <h2 className="text-xl font-semibold mb-5">Nossa música 🎵</h2>
+        <h2 className="text-xl font-semibold mb-5">Trilha sonora 🎵</h2>
 
         <div className="w-full aspect-square rounded-2xl bg-zinc-800 shadow-lg overflow-hidden">
-  <img
-    src={experiencia.foto_principal}
-    alt="Foto principal do presente"
-    className="w-full h-full object-cover"
-  />
-</div>
+          <img
+            src={experiencia.foto_principal}
+            alt="Foto principal do presente"
+            className="w-full h-full object-cover"
+          />
+        </div>
 
         <div className="w-full mt-5">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold">Nossa canção</h3>
-            <p className="text-sm text-zinc-400">
-              Uma música especial para você
-            </p>
+            <h3 className="text-lg font-semibold">
+  Uma escolha especial
+</h3>
+
+<p className="text-sm text-zinc-400">
+  Uma melodia para acompanhar este momento.
+</p>
           </div>
 
           <div className="flex items-center justify-center gap-8">
@@ -174,113 +224,136 @@ if (!experiencia) {
         <h2 className="text-xl font-semibold text-center mb-5">
           Nossas lembranças 📸
         </h2>
+        <p className="[font-variant-caps:small-caps] text-xs text-center">
+          arraste para o lado
+        </p>
 
         <div
-  className="relative w-full aspect-[4/5] rounded-2xl bg-zinc-800 shadow-lg"
-  style={{ perspective: "1200px" }}
-  onTouchStart={(evento) => {
-  setInicioToque(evento.touches[0].clientX);
-}}
+          className="relative w-full aspect-[4/5] rounded-2xl bg-zinc-800 shadow-lg"
+          style={{ perspective: "1200px" }}
+          onTouchStart={(evento) => {
+            setInicioToque(evento.touches[0].clientX);
+          }}
+          onTouchEnd={(evento) => {
+            const fimToque = evento.changedTouches[0].clientX;
+            const distancia = fimToque - inicioToque;
 
-onTouchEnd={(evento) => {
-  const fimToque = evento.changedTouches[0].clientX;
-  const distancia = fimToque - inicioToque;
+            if (Math.abs(distancia) < 50) return;
 
-  if (Math.abs(distancia) < 50) return;
+            if (distancia < 0) {
+              mudarFoto("direita");
+            } else {
+              mudarFoto("esquerda");
+            }
+          }}
+        >
+          <img
+            src={
+              experiencia.fotos_carrossel[
+                direcao === "direita"
+                  ? (fotoAtual + 1) % experiencia.fotos_carrossel.length
+                  : (fotoAtual - 1 + experiencia.fotos_carrossel.length) %
+                    experiencia.fotos_carrossel.length
+              ]
+            }
+            alt="Próxima lembrança"
+            className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+          />
 
-  if (distancia < 0) {
-    mudarFoto("direita");
-  } else {
-    mudarFoto("esquerda");
-  }
-}}
->       
-<img
-  src={
-    experiencia.fotos_carrossel[
-      direcao === "direita"
-        ? (fotoAtual + 1) % experiencia.fotos_carrossel.length
-        : (fotoAtual - 1 + experiencia.fotos_carrossel.length) %
-            experiencia.fotos_carrossel.length
-    ]
-  }
-  alt="Próxima lembrança"
-  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-  
-/>
+          <img
+            src={experiencia.fotos_carrossel[fotoAtual]}
+            alt={`Lembrança ${fotoAtual + 1}`}
+            className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+            style={{
+              transformOrigin: "left center",
+              transform: virando
+                ? `rotateY(${direcao === "direita" ? "-180deg" : "180deg"})`
+                : "rotateY(0deg)",
+              transition: virando ? "transform 1000ms ease-in-out" : "none",
+              backfaceVisibility: "hidden",
+            }}
+          />
 
+          <button
+            type="button"
+            onClick={() => mudarFoto("esquerda")}
+            disabled={virando}
+            className="absolute left-3 w-10 h-10 rounded-full   text-white text-xl"
+            aria-label="Foto anterior"
+          >
+            ❮
+          </button>
 
-
-         <img
-  src={experiencia.fotos_carrossel[fotoAtual]}
-  alt={`Lembrança ${fotoAtual + 1}`}
-  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-  style={{
-    transformOrigin: "left center",
-    transform: virando
-      ? `rotateY(${direcao === "direita" ? "-180deg" : "180deg"})`
-      : "rotateY(0deg)",
-    transition: virando ? "transform 1000ms ease-in-out" : "none",
-    backfaceVisibility: "hidden",
-  }}
-/>
-
-<button
-  type="button"
-  onClick={() => mudarFoto("esquerda")}
-  disabled={virando}
-  className="absolute left-3 w-10 h-10 rounded-full bg-black/60 text-white text-xl"
-  aria-label="Foto anterior"
->
-  ❮
-</button>
-
-<button
-  type="button"
-  onClick={() => mudarFoto("direita")}
-  disabled={virando}
-  className="absolute right-3 w-10 h-10 rounded-full bg-black/60 text-white text-xl"
-  aria-label="Próxima foto"
->
-  ❯
-</button>
+          <button
+            type="button"
+            onClick={() => mudarFoto("direita")}
+            disabled={virando}
+            className="absolute right-3 w-10 h-10 rounded-full  text-white text-xl"
+            aria-label="Próxima foto"
+          >
+            ❯
+          </button>
         </div>
 
         <div className="flex justify-center gap-2 mt-4">
-          <span className="w-2 h-2 rounded-full bg-white"></span>
-          <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
-          <span className="w-2 h-2 rounded-full bg-zinc-600"></span>
+          {experiencia.fotos_carrossel.map((foto, indice) => (
+            <span
+              key={indice}
+              className={`w-2 h-2 rounded-full ${
+                fotoAtual === indice ? "bg-white" : "bg-zinc-600"
+              }`}
+            ></span>
+          ))}
         </div>
       </section>
 
       {/* Contador */}
-      <section className="w-full max-w-sm text-center">
-        <p className="text-zinc-400 text-sm mb-2">
-          Você é especial para mim há...
-        </p>
+    
+   {experiencia.contador_ativo && (
+  <section className="w-full max-w-sm text-center">
+    <p className="text-zinc-400 text-sm mb-2">
+      Nossa história começou em...
+    </p>
 
-        <div className="grid grid-cols-4 gap-2">
-          <div className="bg-zinc-900 rounded-xl p-3">
-            <span className="block text-2xl font-bold">12</span>
-            <span className="text-xs text-zinc-400">Dias</span>
-          </div>
+    <h2 className="text-2xl font-bold mb-4">
+      {new Date(experiencia.data_contador).toLocaleDateString("pt-BR")}
+    </h2>
 
-          <div className="bg-zinc-900 rounded-xl p-3">
-            <span className="block text-2xl font-bold">08</span>
-            <span className="text-xs text-zinc-400">Horas</span>
-          </div>
+    <p className="text-zinc-400 text-sm mb-3">
+      Você é especial para mim há ❤️
+    </p>
 
-          <div className="bg-zinc-900 rounded-xl p-3">
-            <span className="block text-2xl font-bold">35</span>
-            <span className="text-xs text-zinc-400">Minutos</span>
-          </div>
+    <div className="grid grid-cols-4 gap-2">
+      <div className="bg-zinc-900 rounded-xl p-3">
+        <span className="block text-2xl font-bold">
+          {tempo.dias}
+        </span>
+        <span className="text-xs text-zinc-400">Dias</span>
+      </div>
 
-          <div className="bg-zinc-900 rounded-xl p-3">
-            <span className="block text-2xl font-bold">42</span>
-            <span className="text-xs text-zinc-400">Segundos</span>
-          </div>
-        </div>
-      </section>
+      <div className="bg-zinc-900 rounded-xl p-3">
+        <span className="block text-2xl font-bold">
+          {String(tempo.horas).padStart(2, "0")}
+        </span>
+        <span className="text-xs text-zinc-400">Horas</span>
+      </div>
+
+      <div className="bg-zinc-900 rounded-xl p-3">
+        <span className="block text-2xl font-bold">
+          {String(tempo.minutos).padStart(2, "0")}
+        </span>
+        <span className="text-xs text-zinc-400">Minutos</span>
+      </div>
+
+      <div className="bg-zinc-900 rounded-xl p-3">
+        <span className="block text-2xl font-bold">
+          {String(tempo.segundos).padStart(2, "0")}
+        </span>
+        <span className="text-xs text-zinc-400">Segundos</span>
+      </div>
+    </div>
+  </section>
+)}
 
       {/* Mensagem */}
       <section className="w-full max-w-sm pb-10">
@@ -290,8 +363,8 @@ onTouchEnd={(evento) => {
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
           <p className="text-zinc-300 leading-7 whitespace-pre-wrap">
-  {experiencia.mensagem}
-</p>
+            {experiencia.mensagem}
+          </p>
         </div>
       </section>
     </main>

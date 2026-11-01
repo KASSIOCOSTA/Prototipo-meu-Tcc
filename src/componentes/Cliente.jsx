@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 
 function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
@@ -11,9 +11,87 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
   const [mensagem, setMensagem] = useState("");
   const [visualizando, setVisualizando] = useState(false);
   const [fotoAtual, setFotoAtual] = useState(0);
+  const [virando, setVirando] = useState(false);
+  const [direcao, setDirecao] = useState("direita");
+  const [inicioToque, setInicioToque] = useState(0);
+  const [tempo, setTempo] = useState({
+    dias: 0,
+    horas: 0,
+    minutos: 0,
+    segundos: 0,
+  });
+
+  const audioRef = useRef(null);
+
+  const [tocando, setTocando] = useState(false);
+  const [tempoAtual, setTempoAtual] = useState(0);
+  const [duracao, setDuracao] = useState(0);
   //useStates
 
   // Funções
+  useEffect(() => {
+    if (!usarContador || !dataInicio) return;
+
+    const calcularTempo = () => {
+      const inicio = new Date(`${dataInicio}T00:00:00`);
+      const agora = new Date();
+
+      const diferenca = Math.max(0, agora - inicio);
+
+      const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((diferenca / (1000 * 60 * 60)) % 24);
+      const minutos = Math.floor((diferenca / (1000 * 60)) % 60);
+      const segundos = Math.floor((diferenca / 1000) % 60);
+
+      setTempo({ dias, horas, minutos, segundos });
+    };
+
+    calcularTempo();
+
+    const intervalo = setInterval(calcularTempo, 1000);
+
+    return () => clearInterval(intervalo);
+  }, [usarContador, dataInicio]);
+
+  const controlarMusica = () => {
+    if (!audioRef.current) return;
+
+    if (tocando) {
+      audioRef.current.pause();
+      setTocando(false);
+    } else {
+      audioRef.current.play();
+      setTocando(true);
+    }
+  };
+  const formatarTempo = (tempo) => {
+    const minutos = Math.floor(tempo / 60);
+    const segundos = Math.floor(tempo % 60);
+
+    return `${minutos}:${String(segundos).padStart(2, "0")}`;
+  };
+
+  function mudarFoto(novaDirecao) {
+    if (virando) return;
+
+    setDirecao(novaDirecao);
+    setVirando(true);
+
+    setTimeout(() => {
+      setFotoAtual((atual) => {
+        const total = fotosCarrossel.length;
+
+        if (novaDirecao === "direita") {
+          return atual === total - 1 ? 0 : atual + 1;
+        }
+
+        return atual === 0 ? total - 1 : atual - 1;
+      });
+
+      setVirando(false);
+    }, 500);
+  }
+
   const enviarParaSupabase = async () => {
     try {
       const formData = new FormData();
@@ -128,130 +206,436 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
   //Mostrar a Pagina que o Cliente preencheu
   if (visualizando) {
     return (
-      <div>
+      <main className="min-h-screen bg-zinc-950 w-full text-white px-8 py-8 flex flex-col items-center gap-10">
         <h1>Pré-visualização</h1>
 
         {fotoPrincipal && (
-          <>
-            <p>Foto principal: {fotoPrincipal.name}</p>
+          <section className="w-full max-w-sm flex flex-col items-center">
+            <h2 className="text-xl font-semibold mb-5">Trilha sonora 🎵</h2>
 
-            <img
-              src={URL.createObjectURL(fotoPrincipal)}
-              alt="Foto principal"
-              width="300"
-            />
-          </>
+            <div className="w-full aspect-square rounded-2xl bg-zinc-800 shadow-lg overflow-hidden">
+              <img
+                src={URL.createObjectURL(fotoPrincipal)}
+                alt="Foto principal do presente"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            <div className="w-full mt-5">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Uma escolha especial</h3>
+
+                <p className="text-sm text-zinc-400">
+                  Uma melodia para acompanhar este momento.
+                </p>
+              </div>
+
+              <audio
+                ref={audioRef}
+                src={`/musicas/${musica}`}
+                onTimeUpdate={() => {
+                  setTempoAtual(audioRef.current.currentTime);
+                }}
+                onLoadedMetadata={() => {
+                  setDuracao(audioRef.current.duration);
+                }}
+                onEnded={() => {
+                  setTocando(false);
+                }}
+              />
+              <div className="flex items-center justify-center gap-8">
+                <button
+                  type="button"
+                  disabled
+                  className="text-2xl text-zinc-600 cursor-not-allowed"
+                  aria-label="Música anterior"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    height="24px"
+                    width="24px"
+                    fill="#FFFFFF"
+                  >
+                    <path d="M5.5,18V6h2V18h-2Zm13,0l-9-6l9-6V18Zm-2-6Zm0,2.25V9.75L13.1,12l3.4,2.25Z" />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={controlarMusica}
+                  className="w-14 h-14 rounded-full bg-white text-black text-2xl flex items-center justify-center"
+                  aria-label={tocando ? "Pausar música" : "Reproduzir música"}
+                >
+                  {tocando ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      height="24px"
+                      width="24px"
+                      fill="#000000"
+                    >
+                      <path d="M13,19V5h6V19H13ZM5,19V5h6V19H5Zm10-2h2V7H15V17ZM7,17H9V7H7V17ZM7,7V17V7Zm8,0V17V7Z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      height="24px"
+                      width="24px"
+                      fill="#000000"
+                    >
+                      <path d="M8,19V5l11,7L8,19Zm2-7Zm0,3.35L15.25,12L10,8.65v6.7Z" />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled
+                  className="text-2xl text-zinc-600 cursor-not-allowed"
+                  aria-label="Próxima música"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    height="24px"
+                    width="24px"
+                    fill="#FFFFFF"
+                  >
+                    <path d="M16.5,18V6h2V18h-2Zm-11,0V6l9,6l-9,6Zm2-6Zm0,2.25L10.9,12L7.5,9.75v4.5Z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mt-5">
+                <input
+                  type="range"
+                  min="0"
+                  max={duracao || 0}
+                  value={tempoAtual}
+                  onChange={(e) => {
+                    const novoTempo = Number(e.target.value);
+                    audioRef.current.currentTime = novoTempo;
+                    setTempoAtual(novoTempo);
+                  }}
+                  className="w-full accent-white"
+                  aria-label="Progresso da música"
+                />
+
+                <div className="flex justify-between text-xs text-zinc-400">
+                  <span>{formatarTempo(tempoAtual)}</span>
+                  <span>{formatarTempo(duracao)}</span>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
-        <p>Música: {musica}</p>
-
         {/* CARROSSEL */}
-        <div>
-          <p>Fotos do carrossel:</p>
+        <section className="w-full max-w-sm">
+          <h2 className="text-xl font-semibold text-center mb-5">
+            Nossas lembranças 📸
+          </h2>
+
+          <p className="text-xs text-center text-zinc-400 mb-3">
+            Arraste para o lado
+          </p>
 
           {fotosCarrossel.length > 0 && (
-            <div>
-              <img
-                src={URL.createObjectURL(fotosCarrossel[fotoAtual])}
-                alt={`Foto ${fotoAtual + 1}`}
-                width="300"
-              />
+            <>
+              <div
+                className="relative w-full aspect-[4/5] rounded-2xl bg-zinc-800 shadow-lg"
+                style={{ perspective: "1200px" }}
+                onTouchStart={(evento) => {
+                  setInicioToque(evento.touches[0].clientX);
+                }}
+                onTouchEnd={(evento) => {
+                  const fimToque = evento.changedTouches[0].clientX;
+                  const distancia = fimToque - inicioToque;
 
-              <p>
+                  if (Math.abs(distancia) < 50) return;
+
+                  if (distancia < 0) {
+                    mudarFoto("direita");
+                  } else {
+                    mudarFoto("esquerda");
+                  }
+                }}
+              >
+                {/* Foto que aparece por trás */}
+                <img
+                  src={URL.createObjectURL(
+                    fotosCarrossel[
+                      direcao === "direita"
+                        ? (fotoAtual + 1) % fotosCarrossel.length
+                        : (fotoAtual - 1 + fotosCarrossel.length) %
+                          fotosCarrossel.length
+                    ],
+                  )}
+                  alt="Próxima lembrança"
+                  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+                />
+
+                {/* Foto que vira a página */}
+                <img
+                  src={URL.createObjectURL(fotosCarrossel[fotoAtual])}
+                  alt={`Lembrança ${fotoAtual + 1}`}
+                  className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+                  style={{
+                    transformOrigin: "left center",
+                    transform: virando
+                      ? `rotateY(${direcao === "direita" ? "-180deg" : "180deg"})`
+                      : "rotateY(0deg)",
+                    transition: virando
+                      ? "transform 500ms ease-in-out"
+                      : "none",
+                    backfaceVisibility: "hidden",
+                  }}
+                />
+
+                {/* Foto anterior */}
+                <button
+                  type="button"
+                  onClick={() => mudarFoto("esquerda")}
+                  disabled={virando}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-white/50 text-xl disabled:opacity-30"
+                  aria-label="Foto anterior"
+                >
+                  ❮
+                </button>
+
+                {/* Próxima foto */}
+                <button
+                  type="button"
+                  onClick={() => mudarFoto("direita")}
+                  disabled={virando}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full text-white/50 text-xl disabled:opacity-30"
+                  aria-label="Próxima foto"
+                >
+                  ❯
+                </button>
+              </div>
+
+              <p className="text-sm text-zinc-400 text-center mt-3">
                 Foto {fotoAtual + 1} de {fotosCarrossel.length}
               </p>
 
-              <button
-                onClick={() => setFotoAtual(fotoAtual - 1)}
-                disabled={fotoAtual === 0}
-              >
-                ← Anterior
-              </button>
-
-              <button
-                onClick={() => setFotoAtual(fotoAtual + 1)}
-                disabled={fotoAtual === fotosCarrossel.length - 1}
-              >
-                Próxima →
-              </button>
-            </div>
+              {/* Indicadores */}
+              <div className="flex justify-center gap-2 mt-4">
+                {fotosCarrossel.map((foto, indice) => (
+                  <span
+                    key={indice}
+                    className={`w-2 h-2 rounded-full ${
+                      fotoAtual === indice ? "bg-white" : "bg-zinc-600"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
           )}
-        </div>
+        </section>
 
         {/* CONTADOR */}
 
-        {usarContador && <p>Data: {dataInicio}</p>}
+        {usarContador && (
+          <section className="w-full max-w-sm text-center">
+            <p className="text-zinc-400 text-sm mb-2">
+              Nossa história começou em...
+            </p>
+
+            <h2 className="text-2xl font-bold mb-4">
+              {new Date(`${dataInicio}T12:00:00`).toLocaleDateString("pt-BR")}
+            </h2>
+
+            <p className="text-zinc-400 text-sm mb-3">
+              Você é especial para mim há ❤️
+            </p>
+
+            <div className="grid grid-cols-4 gap-2">
+              <div className="bg-zinc-900 rounded-xl p-3">
+                <span className="block text-2xl font-bold">{tempo.dias}</span>
+                <span className="text-xs text-zinc-400">Dias</span>
+              </div>
+
+              <div className="bg-zinc-900 rounded-xl p-3">
+                <span className="block text-2xl font-bold">
+                  {String(tempo.horas).padStart(2, "0")}
+                </span>
+                <span className="text-xs text-zinc-400">Horas</span>
+              </div>
+
+              <div className="bg-zinc-900 rounded-xl p-3">
+                <span className="block text-2xl font-bold">
+                  {String(tempo.minutos).padStart(2, "0")}
+                </span>
+                <span className="text-xs text-zinc-400">Minutos</span>
+              </div>
+
+              <div className="bg-zinc-900 rounded-xl p-3">
+                <span className="block text-2xl font-bold">
+                  {String(tempo.segundos).padStart(2, "0")}
+                </span>
+                <span className="text-xs text-zinc-400">Segundos</span>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* MENSAGEM */}
 
-        <p>Mensagem:</p>
+        {/* MENSAGEM */}
+        <section className="w-full max-w-sm pb-6">
+          <h2 className="text-xl font-semibold text-center mb-5">
+            Uma mensagem para você ❤️
+          </h2>
 
-        <p>{mensagem}</p>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+            <p className="text-zinc-300 leading-7 whitespace-pre-wrap break-words">
+              {mensagem}
+            </p>
+          </div>
+        </section>
 
-        <button onClick={() => setVisualizando(false)}>
-          Voltar para editar
-        </button>
-        <button
-          onClick={enviarParaSupabase}
+        <div className="w-full max-w-sm flex flex-col gap-3 pb-10">
+          <button
+            onClick={() => setVisualizando(false)}
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-4 font-semibold text-white transition hover:bg-zinc-800"
+          >
+            Voltar para editar
+          </button>
 
-          //Botão que envia as informações
-        >
-          Enviar experiência
-        </button>
-        <button onClick={voltar}>Voltar ao painel</button>
-      </div>
+          <button
+            onClick={enviarParaSupabase}
+            className="w-full rounded-xl bg-white px-6 py-4 font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-[0.98]"
+          >
+            Enviar experiência ❤️
+          </button>
+        </div>
+      </main>
     );
   }
 
   // Formulário que o cliente recebe pra preencher
 
   return (
-    <div>
-      <h1>Personalize sua experiência</h1>
+    <div className="w-full max-w-2xl mx-auto px-4 py-8 sm:px-6">
+      <header className="mb-8 text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900">
+          Personalize sua experiência
+        </h1>
 
-      <p>Preencha os dados para criar sua experiência.</p>
+        <p className="mt-2 text-sm sm:text-base text-zinc-500">
+          Preencha os dados abaixo para criar uma experiência especial.
+        </p>
+      </header>
 
       {/* FOTO PRINCIPAL */}
 
-      <div>
-        <label htmlFor="fotoPrincipal">Escolha a foto principal</label>
+      {/* FOTO PRINCIPAL */}
+
+      <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-800">
+          Foto principal
+        </h2>
+
+        <p className="mb-4 text-sm text-zinc-500">
+          Escolha a foto que será a capa da sua experiência.
+        </p>
+
+        <label
+          htmlFor="fotoPrincipal"
+          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-sm font-medium text-zinc-600 transition hover:border-zinc-500 hover:bg-zinc-100"
+        >
+          Escolher foto
+        </label>
 
         <input
           id="fotoPrincipal"
           type="file"
           accept="image/*"
           onChange={escolherFoto}
+          className="hidden"
         />
 
-        {fotoPrincipal && <p>Foto selecionada: {fotoPrincipal.name}</p>}
-      </div>
+        {fotoPrincipal && (
+          <div className="mt-4">
+            <img
+              src={URL.createObjectURL(fotoPrincipal)}
+              alt="Prévia da foto principal"
+              className="mx-auto aspect-[4/5] max-h-64 w-auto rounded-xl object-cover shadow-sm"
+            />
+
+            <p className="mt-2 truncate text-center text-xs text-zinc-400">
+              {fotoPrincipal.name}
+            </p>
+          </div>
+        )}
+      </section>
 
       {/* MÚSICA */}
+      <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-800">
+          Música da experiência
+        </h2>
 
-      <div>
-        <label htmlFor="musica">Escolha uma música</label>
+        <p className="mb-4 text-sm text-zinc-500">
+          Escolha uma música para acompanhar esse momento especial.
+        </p>
 
         <select
-          id="musica"
           value={musica}
-          onChange={(evento) => setMusica(evento.target.value)}
+          onChange={(e) => setMusica(e.target.value)}
+          className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-700 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
         >
           <option value="">Selecione uma música</option>
-
-          <option value="musica1">Música 1</option>
-
-          <option value="musica2">Música 2</option>
-
-          <option value="musica3">Música 3</option>
+          <option value="things-to-do.mp3">Things to Do</option>
+          <option value="leave-the-light-on.mp3">Leave the Light On</option>
+          <option value="rain-in-my-city.mp3">Rain in My City</option>
+          <option value="safe-with-you.mp3">Safe With You</option>
+          <option value="set-me-down-soft.mp3">Set Me Down Soft</option>
         </select>
 
-        {musica && <p>Música selecionada: {musica}</p>}
-      </div>
+        {musica && (
+          <div className="mt-4 rounded-xl bg-zinc-50 p-3">
+            <p className="mb-2 text-sm font-medium text-zinc-700">
+              Prévia da música
+            </p>
 
-      {/* CARROSSEL */}
+            <audio
+              controls
+              autoPlay
+              src={`/musicas/${musica}`}
+              className="w-full"
+            >
+              Seu navegador não suporta áudio.
+            </audio>
+          </div>
+        )}
+        <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+          <p className="text-xs leading-relaxed text-blue-800">
+            🎵 <strong>Sobre as músicas:</strong> As faixas desta biblioteca
+            foram obtidas no Pixabay Music e são disponibilizadas conforme os
+            termos de licença da plataforma.
+          </p>
+        </div>
+      </section>
 
-      <div>
-        <label htmlFor="fotosCarrossel">Escolha as fotos do carrossel</label>
+      {/* FOTOS DO CARROSSEL */}
+      <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-800">
+          Fotos das lembranças
+        </h2>
+
+        <p className="mb-4 text-sm text-zinc-500">
+          Escolha de 3 a 10 fotos para aparecerem na sua experiência.
+        </p>
+
+        <label
+          htmlFor="fotosCarrossel"
+          className="flex cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 px-4 py-6 text-sm font-medium text-zinc-600 transition hover:border-zinc-500 hover:bg-zinc-100"
+        >
+          Adicionar fotos
+        </label>
 
         <input
           id="fotosCarrossel"
@@ -259,55 +643,99 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
           accept="image/*"
           multiple
           onChange={escolherFotos}
+          className="hidden"
         />
 
         {fotosCarrossel.length > 0 && (
-          <p>{fotosCarrossel.length} fotos selecionadas</p>
+          <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+            {fotosCarrossel.map((foto, indice) => (
+              <div key={indice} className="min-w-0">
+                <img
+                  src={URL.createObjectURL(foto)}
+                  alt={`Lembrança ${indice + 1}`}
+                  className="aspect-square w-full rounded-lg object-cover"
+                />
+                <p className="mt-1 truncate text-center text-xs text-zinc-400">
+                  Foto {indice + 1}
+                </p>
+              </div>
+            ))}
+          </div>
         )}
-      </div>
+
+        <p className="mt-3 text-xs text-zinc-400">
+          Fotos selecionadas: {fotosCarrossel.length}/10
+        </p>
+      </section>
 
       {/* CONTADOR */}
+      <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-800">
+          Contador de tempo
+        </h2>
 
-      <div>
-        <label>
+        <p className="mb-4 text-sm text-zinc-500">
+          Se desejar, você pode mostrar há quanto tempo vocês estão juntos. O
+          contador ficará visível na experiência do presenteado.
+        </p>
+
+        <label className="flex cursor-pointer items-center gap-3">
           <input
             type="checkbox"
             checked={usarContador}
-            onChange={(evento) => setUsarContador(evento.target.checked)}
+            onChange={(e) => setUsarContador(e.target.checked)}
+            className="h-5 w-5 rounded border-zinc-300 accent-zinc-800"
           />
-          Quero mostrar o tempo juntos
+
+          <span className="text-sm font-medium text-zinc-700">
+            Mostrar contador de tempo
+          </span>
         </label>
 
         {usarContador && (
-          <div>
-            <label htmlFor="dataInicio">Data de início</label>
+          <div className="mt-4">
+            <label
+              htmlFor="dataInicio"
+              className="mb-2 block text-sm font-medium text-zinc-700"
+            >
+              Data de início
+            </label>
 
             <input
-              type="date"
               id="dataInicio"
+              type="date"
               value={dataInicio}
-              onChange={(evento) => setDataInicio(evento.target.value)}
+              onChange={(e) => setDataInicio(e.target.value)}
+              className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-700 outline-none transition focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
             />
           </div>
         )}
-      </div>
+      </section>
 
       {/* MENSAGEM */}
+      <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-2 text-lg font-semibold text-zinc-800">
+          Mensagem especial
+        </h2>
 
-      <div>
-        <label htmlFor="mensagem">Mensagem final</label>
+        <p className="mb-4 text-sm text-zinc-500">
+          Escreva uma mensagem para acompanhar o presente. Use esse espaço para
+          expressar o que você gostaria que a pessoa lesse.
+        </p>
 
         <textarea
-          id="mensagem"
           value={mensagem}
-          onChange={(evento) => setMensagem(evento.target.value)}
-          placeholder="Escreva uma mensagem especial"
-          minLength={50}
+          onChange={(e) => setMensagem(e.target.value)}
+          placeholder="Escreva sua mensagem aqui..."
+          rows={6}
           maxLength={1000}
+          className="w-full resize-y rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-700 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-200"
         />
 
-        <p>{mensagem.length}/1000 caracteres</p>
-      </div>
+        <p className="mt-2 text-right text-xs text-zinc-400">
+          {mensagem.length}/1000 caracteres
+        </p>
+      </section>
 
       {/* VISUALIZAÇÃO */}
 
@@ -328,6 +756,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
           }
           setVisualizando(true);
         }}
+        className="w-full rounded-xl bg-zinc-900 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-zinc-700 active:scale-[0.98]"
       >
         Visualizar experiência
       </button>
