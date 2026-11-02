@@ -74,6 +74,37 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
       setGerando(false);
     }
   };
+  // Copiar link
+const copiarLink = async () => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(link);
+    } else {
+      const campo = document.createElement("textarea");
+
+      campo.value = link;
+      campo.style.position = "fixed";
+      campo.style.left = "-9999px";
+
+      document.body.appendChild(campo);
+      campo.focus();
+      campo.select();
+
+      const sucesso = document.execCommand("copy");
+
+      document.body.removeChild(campo);
+
+      if (!sucesso) {
+        throw new Error("Não foi possível copiar.");
+      }
+    }
+
+    alert("Link copiado com sucesso!");
+  } catch (erro) {
+    console.error("Erro ao copiar link:", erro);
+    alert("Não foi possível copiar. Copie o link manualmente.");
+  }
+};
 
   // Baixar QR Code
   const baixarQRCode = () => {
@@ -180,11 +211,11 @@ function CriarExperiencia({ voltar, adicionarSolicitacoes }) {
 
               {/* Copiar */}
               <button
-                onClick={() => navigator.clipboard.writeText(link)}
-                className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-              >
-                Copiar link
-              </button>
+  onClick={copiarLink}
+  className="mt-4 w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+>
+  Copiar link
+</button>
 
               {/* QR Code */}
               {qrCode && (

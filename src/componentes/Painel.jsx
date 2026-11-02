@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import LogoEmpresa from "./LogoEmpresa";
 import CriarExperiencia from "./CriarExperiencia";
 import Cliente from "./Cliente";
 import { supabase } from "../lib/supabase";
+import { QRCodeCanvas } from "qrcode.react";
+
 
 function Painel({ sair }) {
   const [criando, setCriando] = useState(false);
@@ -13,23 +16,30 @@ function Painel({ sair }) {
   const [verConfirmados, setVerConfirmados] = useState(false);
   const [verSolicitacoes, setVerSolicitacoes] = useState(false);
   const [mostraCliente, setMostrarCliente] = useState(false);
-  //useStates
-  //enviarExperiencia
+  const qrCodeRef = useRef(null);
+
+  // Voltar para o painel
   const voltarPainel = () => {
     setCriando(false);
   };
+
   const voltarDoCliente = () => {
     setMostrarCliente(false);
   };
 
+  // Adicionar solicitação
   const adicionarSolicitacoes = (solicitacao) => {
-    setSolicitacoes([...solicitacoes, solicitacao]);
+    setSolicitacoes((anteriores) => [...anteriores, solicitacao]);
   };
 
+  // Atualizar experiência enviada
   const enviarExperiencia = (dadosExperiencia) => {
-    setSolicitacoes(
-      solicitacoes.map((solicitacao) => {
-        if (solicitacao.id === dadosExperiencia.idCliente) {
+    setSolicitacoes((anteriores) =>
+      anteriores.map((solicitacao) => {
+        if (
+          solicitacao.id === dadosExperiencia.idCliente ||
+          solicitacao.token_cliente === dadosExperiencia.idCliente
+        ) {
           return {
             ...solicitacao,
             status: "Confirmado",
@@ -43,135 +53,246 @@ function Painel({ sair }) {
 
     console.log("Experiência enviada");
   };
+
+  // Buscar solicitações no Supabase
   const carregarSolicitacoes = async () => {
-  try {
-    const {
-      data: { user },
-      error: erroUsuario,
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+        error: erroUsuario,
+      } = await supabase.auth.getUser();
 
-    if (erroUsuario || !user) {
-      console.error("Usuário não autenticado:", erroUsuario);
-      return;
+      if (erroUsuario || !user) {
+        console.error("Usuário não autenticado:", erroUsuario);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("solicitacoes")
+        .select("id, token_cliente, nome_cliente, status, criado_em")
+        .eq("empresa_id", user.id)
+        .order("criado_em", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      const solicitacoesFormatadas = data.map((solicitacao) => ({
+        id: solicitacao.id,
+        token_cliente: solicitacao.token_cliente,
+        nome: solicitacao.nome_cliente,
+        status:
+          solicitacao.status === "Pendente"
+            ? "Personalização pendente"
+            : solicitacao.status,
+      }));
+
+      setSolicitacoes(solicitacoesFormatadas);
+    } catch (erro) {
+      console.error("Erro ao carregar solicitações:", erro);
     }
+  };
 
-    const { data, error } = await supabase
-      .from("solicitacoes")
-      .select("id, token_cliente, nome_cliente, status, criado_em")
-      .eq("empresa_id", user.id)
-      .order("criado_em", { ascending: false });
+  useEffect(() => {
+    carregarSolicitacoes();
+  }, []);
 
-    if (error) {
-      throw error;
+  // Gerar link exclusivo do cliente
+  function gerarLinkCliente(solicitacao) {
+    if(solicitacaoSelecionada.status === 'Personalização pendente'){
+      return `${window.location.origin}/p/${solicitacao.token_cliente}`;
+    }else{
+      return `${window.location.origin}/presente/${solicitacao.token_cliente}`;
     }
-
-    const solicitacoesFormatadas = data.map((solicitacao) => ({
-      id: solicitacao.id,
-      token_cliente: solicitacao.token_cliente,
-      nome: solicitacao.nome_cliente,
-      status:
-        solicitacao.status === "Pendente"
-          ? "Personalização pendente"
-          : solicitacao.status,
-    }));
-
-    setSolicitacoes(solicitacoesFormatadas);
-  } catch (erro) {
-    console.error("Erro ao carregar solicitações:", erro);
   }
-};
-useEffect(() => {
-  carregarSolicitacoes();
-}, []);
 
-  //funções
+  
 
-  // Visualizar uma solicitação específica
+  // Copiar link
+  async function copiarLink(link) {
+  try {
+    // Tenta usar a API moderna do navegador
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(link);
+    } else {
+      // Alternativa para endereços HTTP na rede local
+      const campo = document.createElement("textarea");
+
+      campo.value = link;
+      campo.style.position = "fixed";
+      campo.style.opacity = "0";
+
+      document.body.appendChild(campo);
+
+      campo.select();
+
+      const copiou = document.execCommand("copy");
+
+      document.body.removeChild(campo);
+
+      if (!copiou) {
+        throw new Error("Falha ao copiar");
+      }
+    }
+
+    alert("Link copiado com sucesso!");
+  } catch (erro) {
+    console.error("Erro ao copiar link:", erro);
+    alert("Não foi possível copiar o link.");
+  }
+}
+
+  // =====================================
+  // VISUALIZAR SOLICITAÇÃO
+  // =====================================
+
   if (solicitacaoSelecionada) {
+    const linkCliente = gerarLinkCliente(solicitacaoSelecionada);
+   
     return (
       <div className="min-h-screen bg-slate-100 px-4 py-8">
         <div className="mx-auto max-w-3xl">
+
           <button
             onClick={() => setSolicitacaoSelecionada(null)}
             className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
           >
-            ← Voltar
+            ← Voltar às solicitações
           </button>
 
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
+
             <div className="mb-8">
-              <p className="text-sm font-medium text-indigo-600">Solicitação</p>
+              <p className="text-sm font-medium text-indigo-600">
+                Solicitação
+              </p>
 
               <h1 className="mt-1 text-2xl font-bold text-slate-900">
                 Visualizar solicitação
               </h1>
             </div>
 
-            <div className="space-y-4">
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Cliente</p>
+            {/* Dados do cliente */}
 
-                <p className="mt-1 font-semibold text-slate-900">
-                  {solicitacaoSelecionada.nome}
-                </p>
-              </div>
-              {solicitacaoSelecionada.experiencia && (
-                <div className="mt-6 rounded-xl bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Foto principal</p>
-                  <p className="mt-1 text-slate-900">
-                    {solicitacaoSelecionada.experiencia.fotoPrincipal?.name}
-                  </p>
+            <div className="mb-6 rounded-xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-500">Cliente</p>
 
-                  <p className="mt-4 text-sm text-slate-500">Música</p>
-                  <p className="mt-1 text-slate-900">
-                    {solicitacaoSelecionada.experiencia.musica}
-                  </p>
+              <p className="mt-1 font-semibold text-slate-900">
+                {solicitacaoSelecionada.nome}
+              </p>
 
-                  <p className="mt-4 text-sm text-slate-500">
-                    Fotos do carrossel
-                  </p>
-                  <p className="mt-1 text-slate-900">
-                    {solicitacaoSelecionada.experiencia.fotosCarrossel?.length}{" "}
-                    fotos
-                  </p>
+              <p className="mt-4 text-sm text-slate-500">Status</p>
 
-                  <p className="mt-4 text-sm text-slate-500">Contador</p>
-                  <p className="mt-1 text-slate-900">
-                    {solicitacaoSelecionada.experiencia.usarContador
-                      ? "Ativado"
-                      : "Desativado"}
-                  </p>
+              <span
+                className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-medium ${
+                  solicitacaoSelecionada.status === "Confirmado"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}
+              >
+                {solicitacaoSelecionada.status}
+              </span>
+            </div>
 
-                  {solicitacaoSelecionada.experiencia.usarContador && (
-                    <>
-                      <p className="mt-4 text-sm text-slate-500">Data</p>
-                      <p className="mt-1 text-slate-900">
-                        {solicitacaoSelecionada.experiencia.dataInicio}
-                      </p>
-                    </>
-                  )}
+            {/* Link do cliente */}
 
-                  <p className="mt-4 text-sm text-slate-500">Mensagem</p>
-                  <p className="mt-1 text-slate-900">
-                    {solicitacaoSelecionada.experiencia.mensagem}
-                  </p>
-                </div>
-              )}
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5">
 
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Status</p>
+              <h2 className="text-lg font-bold text-slate-900">
+                Link de personalização
+              </h2>
 
-                <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-medium ${solicitacaoSelecionada.status === "Confirmado" ? 'text-green-700 bg-green-100' : 'text-amber-700 bg-amber-100'}`}>
+              <p className="mt-2 text-sm text-slate-600">
+                Envie este endereço ao cliente para que ele personalize
+                a experiência digital.
+              </p>
 
-                  {solicitacaoSelecionada.status}
-                </span>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+
+                <input
+                  type="text"
+                  readOnly
+                  value={linkCliente}
+                  className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 outline-none"
+                />
+
+                <button
+                  onClick={() => copiarLink(linkCliente)}
+                  className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                >
+                  Copiar link
+                </button>
+
               </div>
             </div>
+
+            {/* QR Code */}
+
+            <div className="mt-6 flex flex-col items-center rounded-xl bg-slate-50 p-6">
+
+              <h2 className="mb-2 text-lg font-bold text-slate-900">
+                QR Code
+              </h2>
+
+              <p className="mb-5 text-center text-sm text-slate-500">
+                O cliente também pode acessar pelo QR Code.
+              </p>
+
+              {solicitacaoSelecionada.token_cliente ? (
+                <div>
+                <QRCodeCanvas
+                  ref={qrCodeRef}
+                  value={linkCliente}
+                  size={220}
+                  level="H"
+                  includeMargin
+                  
+                />
+                <button
+  onClick={() => {
+    const canvas = document.querySelector("#qrcode-presente");
+
+    if (!canvas) {
+      alert("QR Code não encontrado.");
+      return;
+    }
+
+    const imagem = canvas.toDataURL("image/png");
+    const linkDownload = document.createElement("a");
+
+    linkDownload.href = imagem;
+    linkDownload.download = `QR-Code-${solicitacaoSelecionada.nome}.png`;
+
+    linkDownload.click();
+  }}
+  className="mt-5  rounded-xl m-auto bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+>
+  Baixar QR Code
+</button>
+                </div>
+                
+              ) : (
+                <p className="text-sm text-red-600">
+                  Não foi possível gerar o QR Code: token não encontrado.
+                </p>
+              )}
+
+              <p className="mt-4 text-center text-xs text-slate-500">
+                Este QR Code corresponde ao link exclusivo desta solicitação.
+              </p>
+
+            </div>
+
           </div>
         </div>
       </div>
     );
   }
+
+  // =====================================
+  // TELA DO CLIENTE
+  // =====================================
+
   if (mostraCliente) {
     return (
       <Cliente
@@ -182,10 +303,16 @@ useEffect(() => {
       />
     );
   }
+
+  // =====================================
+  // CONFIGURAÇÕES
+  // =====================================
+
   if (mostrarConfiguracoes) {
     return (
       <div className="min-h-screen bg-slate-100 px-4 py-8">
         <div className="mx-auto max-w-5xl">
+
           <button
             onClick={() => setMostrarConfiguracoes(false)}
             className="mb-6 rounded-lg bg-white px-4 py-2 shadow-sm"
@@ -200,25 +327,35 @@ useEffect(() => {
 
             <LogoEmpresa />
           </div>
+
         </div>
       </div>
     );
   }
 
+  // =====================================
+  // CONTEÚDO PRINCIPAL
+  // =====================================
+
   return (
     <div className="min-h-screen bg-slate-100">
+
       {criando ? (
+
         <CriarExperiencia
           voltar={voltarPainel}
           adicionarSolicitacoes={adicionarSolicitacoes}
         />
+
       ) : verSolicitacoes ? (
-        // =========================
+
+        // =====================================
         // SOLICITAÇÕES PENDENTES
-        // =========================
+        // =====================================
 
         <div className="min-h-screen px-4 py-8 sm:px-6">
           <div className="mx-auto max-w-5xl">
+
             <button
               onClick={() => setVerSolicitacoes(false)}
               className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -241,27 +378,23 @@ useEffect(() => {
             </div>
 
             <div className="grid gap-4">
+
               {solicitacoes
                 .filter(
                   (solicitacao) =>
                     solicitacao.status === "Personalização pendente",
                 )
-                .map((solicitacao, index) => (
+                .map((solicitacao) => (
+
                   <div
-                    key={index}
+                    key={solicitacao.id}
                     className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <button
-                      onClick={() => {
-                        setIdClienteAtual(solicitacao.token_cliente);
-                        setMostrarCliente(true);
-                      }}
-                      className="mt-3 rounded-lg bg-pink-600 px-4 py-2 text-white"
-                    >
-                      Abrir tela do cliente
-                    </button>
+
                     <div>
-                      <p className="text-sm text-slate-500">Cliente</p>
+                      <p className="text-sm text-slate-500">
+                        Cliente
+                      </p>
 
                       <h2 className="mt-1 text-lg font-semibold text-slate-900">
                         {solicitacao.nome}
@@ -278,18 +411,39 @@ useEffect(() => {
                     >
                       Visualizar
                     </button>
+
                   </div>
                 ))}
+
             </div>
+
+            {solicitacoes.filter(
+              (solicitacao) =>
+                solicitacao.status === "Personalização pendente",
+            ).length === 0 && (
+              <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
+                <p className="font-semibold text-slate-700">
+                  Nenhuma solicitação pendente.
+                </p>
+
+                <p className="mt-2 text-sm text-slate-500">
+                  Quando houver novas solicitações, elas aparecerão aqui.
+                </p>
+              </div>
+            )}
+
           </div>
         </div>
+
       ) : verConfirmados ? (
-        // =========================
+
+        // =====================================
         // CONFIRMADOS
-        // =========================
+        // =====================================
 
         <div className="min-h-screen px-4 py-8 sm:px-6">
           <div className="mx-auto max-w-5xl">
+
             <button
               onClick={() => setVerConfirmados(false)}
               className="mb-6 flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900"
@@ -312,15 +466,22 @@ useEffect(() => {
             </div>
 
             <div className="grid gap-4">
+
               {solicitacoes
-                .filter((solicitacao) => solicitacao.status === "Confirmado")
-                .map((solicitacao, index) => (
+                .filter(
+                  (solicitacao) => solicitacao.status === "Confirmado",
+                )
+                .map((solicitacao) => (
+
                   <div
-                    key={index}
+                    key={solicitacao.id}
                     className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:flex-row sm:items-center sm:justify-between"
                   >
+
                     <div>
-                      <p className="text-sm text-slate-500">Cliente</p>
+                      <p className="text-sm text-slate-500">
+                        Cliente
+                      </p>
 
                       <h2 className="mt-1 text-lg font-semibold text-slate-900">
                         {solicitacao.nome}
@@ -337,18 +498,34 @@ useEffect(() => {
                     >
                       Visualizar
                     </button>
+
                   </div>
                 ))}
+
             </div>
+
+            {solicitacoes.filter(
+              (solicitacao) => solicitacao.status === "Confirmado",
+            ).length === 0 && (
+              <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
+                <p className="font-semibold text-slate-700">
+                  Nenhuma experiência confirmada ainda.
+                </p>
+              </div>
+            )}
+
           </div>
         </div>
+
       ) : (
-        // =========================
+
+        // =====================================
         // PAINEL PRINCIPAL
-        // =========================
+        // =====================================
 
         <div className="min-h-screen px-4 py-8 sm:px-6">
           <div className="mx-auto max-w-6xl">
+
             {/* Cabeçalho */}
 
             <div className="mb-10">
@@ -375,7 +552,9 @@ useEffect(() => {
                 Nova experiência
               </p>
 
-              <h2 className="mt-1 text-xl font-bold">Criar experiência</h2>
+              <h2 className="mt-1 text-xl font-bold">
+                Criar experiência
+              </h2>
 
               <p className="mt-2 text-sm text-indigo-100">
                 Crie um novo link personalizado para seu cliente.
@@ -385,6 +564,7 @@ useEffect(() => {
             {/* Cards */}
 
             <div className="grid gap-5 sm:grid-cols-2">
+
               {/* Pendentes */}
 
               <button
@@ -392,6 +572,7 @@ useEffect(() => {
                 className="group rounded-2xl bg-white p-6 text-left shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
+
                   <div>
                     <p className="text-sm font-medium text-slate-500">
                       Solicitações
@@ -410,6 +591,7 @@ useEffect(() => {
                   <div className="rounded-xl bg-amber-100 px-3 py-2 text-amber-700">
                     Pendentes
                   </div>
+
                 </div>
 
                 <p className="mt-5 text-sm font-medium text-slate-600 group-hover:text-indigo-600">
@@ -424,6 +606,7 @@ useEffect(() => {
                 className="group rounded-2xl bg-white p-6 text-left shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-md"
               >
                 <div className="flex items-start justify-between">
+
                   <div>
                     <p className="text-sm font-medium text-slate-500">
                       Experiências
@@ -441,24 +624,30 @@ useEffect(() => {
                   <div className="rounded-xl bg-emerald-100 px-3 py-2 text-emerald-700">
                     Confirmados
                   </div>
+
                 </div>
 
                 <p className="mt-5 text-sm font-medium text-slate-600 group-hover:text-emerald-600">
                   Ver confirmados →
                 </p>
               </button>
+
             </div>
 
             {/* Outros botões */}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+
               <button
                 onClick={() => setMostrarConfiguracoes(true)}
                 className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
               >
                 Configurações da empresa
               </button>
-              <button className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50">
+
+              <button
+                className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+              >
                 Minhas experiências
               </button>
 
@@ -468,10 +657,13 @@ useEffect(() => {
               >
                 Sair
               </button>
+
             </div>
+
           </div>
         </div>
       )}
+
     </div>
   );
 }
