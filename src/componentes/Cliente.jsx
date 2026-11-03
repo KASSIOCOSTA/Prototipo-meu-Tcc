@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import imageCompression from "browser-image-compression";
 
 function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
-  //useStates
+  // Estados
   const [fotoPrincipal, setFotoPrincipal] = useState(null);
   const [musica, setMusica] = useState("");
   const [fotosCarrossel, setFotosCarrossel] = useState([]);
@@ -14,6 +14,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
   const [virando, setVirando] = useState(false);
   const [direcao, setDirecao] = useState("direita");
   const [inicioToque, setInicioToque] = useState(0);
+
   const [tempo, setTempo] = useState({
     dias: 0,
     horas: 0,
@@ -21,14 +22,16 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
     segundos: 0,
   });
 
-  const audioRef = useRef(null);
-
   const [tocando, setTocando] = useState(false);
   const [tempoAtual, setTempoAtual] = useState(0);
   const [duracao, setDuracao] = useState(0);
-  //useStates
 
-  // Funções
+  const [enviando, setEnviando] = useState(false);
+  const [statusEnvio, setStatusEnvio] = useState("");
+
+  const audioRef = useRef(null);
+
+  // Calcula o contador
   useEffect(() => {
     if (!usarContador || !dataInicio) return;
 
@@ -53,17 +56,25 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
     return () => clearInterval(intervalo);
   }, [usarContador, dataInicio]);
 
-  const controlarMusica = () => {
+  // Controla a música
+  const controlarMusica = async () => {
     if (!audioRef.current) return;
 
-    if (tocando) {
-      audioRef.current.pause();
+    try {
+      if (tocando) {
+        audioRef.current.pause();
+        setTocando(false);
+      } else {
+        await audioRef.current.play();
+        setTocando(true);
+      }
+    } catch (erro) {
+      console.error("Erro ao reproduzir música:", erro);
       setTocando(false);
-    } else {
-      audioRef.current.play();
-      setTocando(true);
     }
   };
+
+  // Formata o tempo da música
   const formatarTempo = (tempo) => {
     const minutos = Math.floor(tempo / 60);
     const segundos = Math.floor(tempo % 60);
@@ -71,8 +82,9 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
     return `${minutos}:${String(segundos).padStart(2, "0")}`;
   };
 
+  // Muda a foto do carrossel
   function mudarFoto(novaDirecao) {
-    if (virando) return;
+    if (virando || fotosCarrossel.length === 0) return;
 
     setDirecao(novaDirecao);
     setVirando(true);
@@ -92,7 +104,13 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
     }, 500);
   }
 
+  // Envia a experiência para o Supabase
   const enviarParaSupabase = async () => {
+    if (enviando || statusEnvio === "sucesso") return;
+
+    setEnviando(true);
+    setStatusEnvio("");
+
     try {
       const formData = new FormData();
 
@@ -100,7 +118,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
       formData.append("musica", musica);
       formData.append("mensagem", mensagem);
       formData.append("usarContador", String(usarContador));
-      formData.append("dataInicio", dataInicio);
+      formData.append("dataInicio", usarContador ? dataInicio : "");
 
       formData.append("fotoPrincipal", fotoPrincipal);
 
@@ -119,24 +137,47 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
         },
       );
 
-      const resultado = await resposta.json();
+      console.log("Status HTTP:", resposta.status);
 
-      if (!resposta.ok) {
-        throw new Error(resultado.erro || "Erro ao enviar a experiência.");
+      const textoResposta = await resposta.text();
+
+      console.log("Resposta do servidor:", textoResposta);
+
+      let resultado;
+
+      try {
+        resultado = JSON.parse(textoResposta);
+      } catch {
+        throw new Error(
+          "O servidor retornou uma resposta inválida. Verifique sua conexão e tente novamente.",
+        );
       }
 
-      console.log("Resposta da Edge Function:", resultado);
-      alert("Dados enviados para a função com sucesso!");
-      // Avisar ao painel que o envio terminou
+      if (!resposta.ok) {
+        throw new Error(
+          resultado.erro || "Não foi possível enviar a experiência.",
+        );
+      }
+
+      console.log("Experiência salva:", resultado);
+
+      setStatusEnvio("sucesso");
+
       if (aoEnviarSucesso) {
         aoEnviarSucesso();
       }
     } catch (erro) {
       console.error("Erro ao enviar experiência:", erro);
-      alert(erro.message || "Não foi possível enviar a experiência.");
+
+      setStatusEnvio(
+        erro.message || "Não foi possível enviar a experiência.",
+      );
+    } finally {
+      setEnviando(false);
     }
   };
 
+  // Escolhe e comprime a foto principal
   const escolherFoto = async (evento) => {
     const arquivo = evento.target.files[0];
 
@@ -159,8 +200,9 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
       console.error("Erro ao comprimir a foto:", erro);
       alert("Não foi possível processar a imagem.");
     }
-  }; // escolher a foto principal
+  };
 
+  // Escolhe e comprime as fotos do carrossel
   const escolherFotos = async (evento) => {
     const arquivos = Array.from(evento.target.files);
 
@@ -199,11 +241,9 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
       console.error("Erro ao comprimir as fotos:", erro);
       alert("Não foi possível processar as imagens.");
     }
-  }; // escolher as fotos do carrosel
-  //Funções
+  };
 
   // Pré-visualização
-  //Mostrar a Pagina que o Cliente preencheu
   if (visualizando) {
     return (
       <main className="min-h-screen bg-zinc-950 w-full text-white px-8 py-8 flex flex-col items-center gap-10">
@@ -234,15 +274,20 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
                 ref={audioRef}
                 src={`/musicas/${musica}`}
                 onTimeUpdate={() => {
-                  setTempoAtual(audioRef.current.currentTime);
+                  if (audioRef.current) {
+                    setTempoAtual(audioRef.current.currentTime);
+                  }
                 }}
                 onLoadedMetadata={() => {
-                  setDuracao(audioRef.current.duration);
+                  if (audioRef.current) {
+                    setDuracao(audioRef.current.duration);
+                  }
                 }}
                 onEnded={() => {
                   setTocando(false);
                 }}
               />
+
               <div className="flex items-center justify-center gap-8">
                 <button
                   type="button"
@@ -303,10 +348,11 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
                     width="24px"
                     fill="#FFFFFF"
                   >
-                    <path d="M16.5,18V6h2V18h-2Zm-11,0V6l9,6l-9,6Zm2-6Zm0,2.25L10.9,12L7.5,9.75v4.5Z" />
+                    <path d="M16.5,18V6h2V18h-2Zm-11,0V6l9,6l-9,6Zm2-6Zm2.4,2.25V9.75L10.9,12l-3.4,2.25Z" />
                   </svg>
                 </button>
               </div>
+
               <div className="mt-5">
                 <input
                   type="range"
@@ -315,7 +361,11 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
                   value={tempoAtual}
                   onChange={(e) => {
                     const novoTempo = Number(e.target.value);
-                    audioRef.current.currentTime = novoTempo;
+
+                    if (audioRef.current) {
+                      audioRef.current.currentTime = novoTempo;
+                    }
+
                     setTempoAtual(novoTempo);
                   }}
                   className="w-full accent-white"
@@ -436,7 +486,6 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
         </section>
 
         {/* CONTADOR */}
-
         {usarContador && (
           <section className="w-full max-w-sm text-center">
             <p className="text-zinc-400 text-sm mb-2">
@@ -482,8 +531,6 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
         )}
 
         {/* MENSAGEM */}
-
-        {/* MENSAGEM */}
         <section className="w-full max-w-sm pb-6">
           <h2 className="text-xl font-semibold text-center mb-5">
             Uma mensagem para você ❤️
@@ -496,27 +543,47 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
           </div>
         </section>
 
+        {/* BOTÕES */}
         <div className="w-full max-w-sm flex flex-col gap-3 pb-10">
           <button
+            type="button"
             onClick={() => setVisualizando(false)}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-4 font-semibold text-white transition hover:bg-zinc-800"
+            disabled={enviando || statusEnvio === "sucesso"}
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-4 font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
           >
             Voltar para editar
           </button>
 
           <button
+            type="button"
             onClick={enviarParaSupabase}
-            className="w-full rounded-xl bg-white px-6 py-4 font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-[0.98]"
+            disabled={enviando || statusEnvio === "sucesso"}
+            className="w-full rounded-xl bg-white px-6 py-4 font-semibold text-zinc-950 transition hover:bg-zinc-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Enviar experiência ❤️
+            {enviando
+              ? "Enviando experiência..."
+              : statusEnvio === "sucesso"
+                ? "Experiência enviada ❤️"
+                : "Enviar experiência ❤️"}
           </button>
+
+          {statusEnvio === "sucesso" && (
+            <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-4 text-center text-sm font-medium text-green-800">
+              ❤️ Sua experiência foi enviada e confirmada com sucesso!
+            </div>
+          )}
+
+          {statusEnvio && statusEnvio !== "sucesso" && (
+            <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-700">
+              {statusEnvio}
+            </div>
+          )}
         </div>
       </main>
     );
   }
 
-  // Formulário que o cliente recebe pra preencher
-
+  // Formulário que o cliente recebe
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 sm:px-6">
       <header className="mb-8 text-center">
@@ -530,9 +597,6 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
       </header>
 
       {/* FOTO PRINCIPAL */}
-
-      {/* FOTO PRINCIPAL */}
-
       <section className="mb-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="mb-2 text-lg font-semibold text-zinc-800">
           Foto principal
@@ -611,6 +675,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
             </audio>
           </div>
         )}
+
         <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
           <p className="text-xs leading-relaxed text-blue-800">
             🎵 <strong>Sobre as músicas:</strong> As faixas desta biblioteca
@@ -655,6 +720,7 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
                   alt={`Lembrança ${indice + 1}`}
                   className="aspect-square w-full rounded-lg object-cover"
                 />
+
                 <p className="mt-1 truncate text-center text-xs text-zinc-400">
                   Foto {indice + 1}
                 </p>
@@ -738,22 +804,40 @@ function Cliente({ enviarExperiencia, voltar, idCliente, aoEnviarSucesso }) {
       </section>
 
       {/* VISUALIZAÇÃO */}
-
       <button
+        type="button"
         onClick={() => {
           if (fotoPrincipal === null) {
-            alert("Escolha a foto principal");
-            return;
-          } else if (musica === "") {
-            alert("Selecione uma musica");
-            return;
-          } else if (fotosCarrossel.length < 3) {
-            alert("Adicione no mínimo 3 fotos");
-            return;
-          } else if (mensagem.length < 50) {
-            alert("Digite no mínimo 50 caracteres");
+            alert("Escolha a foto principal.");
             return;
           }
+
+          if (musica === "") {
+            alert("Selecione uma música.");
+            return;
+          }
+
+          if (fotosCarrossel.length < 3) {
+            alert("Adicione no mínimo 3 fotos.");
+            return;
+          }
+
+          if (fotosCarrossel.length > 10) {
+            alert("Adicione no máximo 10 fotos.");
+            return;
+          }
+
+          if (usarContador && !dataInicio) {
+            alert("Selecione a data de início do contador.");
+            return;
+          }
+
+          if (mensagem.trim().length < 50) {
+            alert("Digite no mínimo 50 caracteres.");
+            return;
+          }
+
+          setStatusEnvio("");
           setVisualizando(true);
         }}
         className="w-full rounded-xl bg-zinc-900 px-6 py-4 text-base font-semibold text-white shadow-md transition hover:bg-zinc-700 active:scale-[0.98]"

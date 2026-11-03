@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 function Presenteado() {
@@ -11,12 +11,46 @@ function Presenteado() {
   const [virando, setVirando] = useState(false);
   const [direcao, setDirecao] = useState("direita");
   const [inicioToque, setInicioToque] = useState(0);
-const [tempo, setTempo] = useState({
-  dias: 0,
-  horas: 0,
-  minutos: 0,
-  segundos: 0,
-});
+  const [tempo, setTempo] = useState({
+    dias: 0,
+    horas: 0,
+    minutos: 0,
+    segundos: 0,
+  });
+  const audioRef = useRef(null);
+
+  const [tocando, setTocando] = useState(false);
+  const [tempoAtual, setTempoAtual] = useState(0);
+  const [duracao, setDuracao] = useState(0);
+  const [erroAudio, setErroAudio] = useState("");
+
+  const controlarMusica = async () => {
+    const audio = audioRef.current;
+
+    if (!audio) return;
+
+    if (tocando) {
+      audio.pause();
+      return;
+    }
+
+    try {
+      await audio.play();
+      setErroAudio("");
+    } catch (erro) {
+      console.error("Erro ao reproduzir música:", erro);
+      setErroAudio("Não foi possível reproduzir esta música.");
+    }
+  };
+
+  const formatarTempo = (valor) => {
+    if (!Number.isFinite(valor)) return "0:00";
+
+    const minutos = Math.floor(valor / 60);
+    const segundos = Math.floor(valor % 60);
+
+    return `${minutos}:${String(segundos).padStart(2, "0")}`;
+  };
 
   function mudarFoto(novaDirecao) {
     if (virando) return;
@@ -95,32 +129,36 @@ const [tempo, setTempo] = useState({
   }, [experiencia, fotoAtual, virando]);
 
   useEffect(() => {
-  if (!experiencia || !experiencia.contador_ativo || !experiencia.data_contador) {
-    return;
-  }
+    if (
+      !experiencia ||
+      !experiencia.contador_ativo ||
+      !experiencia.data_contador
+    ) {
+      return;
+    }
 
-  function atualizarContador() {
-    const inicio = new Date(experiencia.data_contador).getTime();
-    const agora = Date.now();
+    function atualizarContador() {
+      const inicio = new Date(experiencia.data_contador).getTime();
+      const agora = Date.now();
 
-    const diferenca = Math.max(0, agora - inicio);
+      const diferenca = Math.max(0, agora - inicio);
 
-    const segundosTotais = Math.floor(diferenca / 1000);
+      const segundosTotais = Math.floor(diferenca / 1000);
 
-    const dias = Math.floor(segundosTotais / 86400);
-    const horas = Math.floor((segundosTotais % 86400) / 3600);
-    const minutos = Math.floor((segundosTotais % 3600) / 60);
-    const segundos = segundosTotais % 60;
+      const dias = Math.floor(segundosTotais / 86400);
+      const horas = Math.floor((segundosTotais % 86400) / 3600);
+      const minutos = Math.floor((segundosTotais % 3600) / 60);
+      const segundos = segundosTotais % 60;
 
-    setTempo({ dias, horas, minutos, segundos });
-  }
+      setTempo({ dias, horas, minutos, segundos });
+    }
 
-  atualizarContador();
+    atualizarContador();
 
-  const intervalo = setInterval(atualizarContador, 1000);
+    const intervalo = setInterval(atualizarContador, 1000);
 
-  return () => clearInterval(intervalo);
-}, [experiencia]);
+    return () => clearInterval(intervalo);
+  }, [experiencia]);
 
   if (carregando) {
     return (
@@ -162,61 +200,102 @@ const [tempo, setTempo] = useState({
           />
         </div>
 
-        <div className="w-full mt-5">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold">
-  Uma escolha especial
-</h3>
+       <div className="w-full mt-5">
+  <div className="mb-4">
+    <h3 className="text-lg font-semibold">
+      Uma escolha especial
+    </h3>
 
-<p className="text-sm text-zinc-400">
-  Uma melodia para acompanhar este momento.
-</p>
-          </div>
+    <p className="text-sm text-zinc-400">
+      Uma melodia para acompanhar este momento.
+    </p>
+  </div>
 
-          <div className="flex items-center justify-center gap-8">
-            <button
-              type="button"
-              disabled
-              className="text-2xl text-zinc-600 cursor-not-allowed"
-              aria-label="Música anterior"
-            >
-              ⏮
-            </button>
+  <audio
+    ref={audioRef}
+    src={
+      experiencia.musica
+        ? `/musicas/${experiencia.musica}`
+        : undefined
+    }
+    preload="metadata"
+    onTimeUpdate={() => {
+      setTempoAtual(audioRef.current?.currentTime || 0);
+    }}
+    onLoadedMetadata={() => {
+      setDuracao(audioRef.current?.duration || 0);
+    }}
+    onPlay={() => setTocando(true)}
+    onPause={() => setTocando(false)}
+    onEnded={() => {
+      setTocando(false);
+      setTempoAtual(0);
+    }}
+    onError={() => {
+      setErroAudio("Não foi possível carregar esta música.");
+      setTocando(false);
+    }}
+  />
 
-            <button
-              type="button"
-              className="w-14 h-14 rounded-full bg-white text-black text-2xl flex items-center justify-center"
-              aria-label="Reproduzir música"
-            >
-              ▶
-            </button>
+  <div className="flex items-center justify-center gap-8">
+    <button
+      type="button"
+      disabled
+      className="text-2xl text-zinc-600 cursor-not-allowed"
+      aria-label="Música anterior"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#FFFFFF"><path d="M5.5,18V6h2V18h-2Zm13,0l-9-6l9-6V18Zm-2-6Zm0,2.25V9.75L13.1,12l3.4,2.25Z"/></svg>
+    </button>
 
-            <button
-              type="button"
-              disabled
-              className="text-2xl text-zinc-600 cursor-not-allowed"
-              aria-label="Próxima música"
-            >
-              ⏭
-            </button>
-          </div>
+    <button
+      type="button"
+      onClick={controlarMusica}
+      className="w-14 h-14 rounded-full bg-white text-black text-2xl flex items-center justify-center"
+      aria-label={tocando ? "Pausar música" : "Reproduzir música"}
+    >
+      {tocando ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#1f1f1f"><path d="M13,19V5h6V19H13ZM5,19V5h6V19H5Zm10-2h2V7H15V17ZM7,17H9V7H7V17ZM7,7V17V7Zm8,0V17V7Z"/></svg> : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#1f1f1f"><path d="M8,19V5l11,7L8,19Zm2-7Zm0,3.35L15.25,12L10,8.65v6.7Z"/></svg>}
+    </button>
 
-          <div className="mt-5">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              defaultValue="0"
-              className="w-full accent-white"
-              aria-label="Progresso da música"
-            />
+    <button
+      type="button"
+      disabled
+      className="text-2xl text-zinc-600 cursor-not-allowed"
+      aria-label="Próxima música"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#FFFFFF"><path d="M16.5,18V6h2V18h-2Zm-11,0V6l9,6l-9,6Zm2-6Zm0,2.25L10.9,12L7.5,9.75v4.5Z"/></svg>
+    </button>
+  </div>
 
-            <div className="flex justify-between text-xs text-zinc-400">
-              <span>0:00</span>
-              <span>0:00</span>
-            </div>
-          </div>
-        </div>
+  <div className="mt-5">
+    <input
+      type="range"
+      min="0"
+      max={duracao || 0}
+      value={tempoAtual}
+      onChange={(evento) => {
+        const novoTempo = Number(evento.target.value);
+
+        if (audioRef.current) {
+          audioRef.current.currentTime = novoTempo;
+          setTempoAtual(novoTempo);
+        }
+      }}
+      className="w-full accent-white"
+      aria-label="Progresso da música"
+    />
+
+    <div className="flex justify-between text-xs text-zinc-400">
+      <span>{formatarTempo(tempoAtual)}</span>
+      <span>{formatarTempo(duracao)}</span>
+    </div>
+  </div>
+
+  {erroAudio && (
+    <p className="mt-3 text-center text-sm text-red-400">
+      {erroAudio}
+    </p>
+  )}
+</div>
       </section>
 
       {/* Carrossel de fotos */}
@@ -308,52 +387,50 @@ const [tempo, setTempo] = useState({
       </section>
 
       {/* Contador */}
-    
-   {experiencia.contador_ativo && (
-  <section className="w-full max-w-sm text-center">
-    <p className="text-zinc-400 text-sm mb-2">
-      Nossa história começou em...
-    </p>
 
-    <h2 className="text-2xl font-bold mb-4">
-      {new Date(experiencia.data_contador).toLocaleDateString("pt-BR")}
-    </h2>
+      {experiencia.contador_ativo && (
+        <section className="w-full max-w-sm text-center">
+          <p className="text-zinc-400 text-sm mb-2">
+            Nossa história começou em...
+          </p>
 
-    <p className="text-zinc-400 text-sm mb-3">
-      Você é especial para mim há ❤️
-    </p>
+          <h2 className="text-2xl font-bold mb-4">
+            {new Date(experiencia.data_contador).toLocaleDateString("pt-BR")}
+          </h2>
 
-    <div className="grid grid-cols-4 gap-2">
-      <div className="bg-zinc-900 rounded-xl p-3">
-        <span className="block text-2xl font-bold">
-          {tempo.dias}
-        </span>
-        <span className="text-xs text-zinc-400">Dias</span>
-      </div>
+          <p className="text-zinc-400 text-sm mb-3">
+            Você é especial para mim há ❤️
+          </p>
 
-      <div className="bg-zinc-900 rounded-xl p-3">
-        <span className="block text-2xl font-bold">
-          {String(tempo.horas).padStart(2, "0")}
-        </span>
-        <span className="text-xs text-zinc-400">Horas</span>
-      </div>
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-zinc-900 rounded-xl p-3">
+              <span className="block text-2xl font-bold">{tempo.dias}</span>
+              <span className="text-xs text-zinc-400">Dias</span>
+            </div>
 
-      <div className="bg-zinc-900 rounded-xl p-3">
-        <span className="block text-2xl font-bold">
-          {String(tempo.minutos).padStart(2, "0")}
-        </span>
-        <span className="text-xs text-zinc-400">Minutos</span>
-      </div>
+            <div className="bg-zinc-900 rounded-xl p-3">
+              <span className="block text-2xl font-bold">
+                {String(tempo.horas).padStart(2, "0")}
+              </span>
+              <span className="text-xs text-zinc-400">Horas</span>
+            </div>
 
-      <div className="bg-zinc-900 rounded-xl p-3">
-        <span className="block text-2xl font-bold">
-          {String(tempo.segundos).padStart(2, "0")}
-        </span>
-        <span className="text-xs text-zinc-400">Segundos</span>
-      </div>
-    </div>
-  </section>
-)}
+            <div className="bg-zinc-900 rounded-xl p-3">
+              <span className="block text-2xl font-bold">
+                {String(tempo.minutos).padStart(2, "0")}
+              </span>
+              <span className="text-xs text-zinc-400">Minutos</span>
+            </div>
+
+            <div className="bg-zinc-900 rounded-xl p-3">
+              <span className="block text-2xl font-bold">
+                {String(tempo.segundos).padStart(2, "0")}
+              </span>
+              <span className="text-xs text-zinc-400">Segundos</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Mensagem */}
       <section className="w-full max-w-sm pb-10">
@@ -361,7 +438,7 @@ const [tempo, setTempo] = useState({
           Uma mensagem para você ❤️
         </h2>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-lg">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-l break-words">
           <p className="text-zinc-300 leading-7 whitespace-pre-wrap">
             {experiencia.mensagem}
           </p>

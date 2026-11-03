@@ -55,83 +55,154 @@ function Cadastro({ voltarLogin }) {
 
   //funções
 
-  return (
-    <main>
-      <h1>Criar conta</h1>
-      <button type="button" onClick={voltarLogin}>
+ 
+return (
+  <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
+    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-lg sm:p-10">
+
+      {/* Cabeçalho */}
+      <div className="mb-8">
+        <p className="text-sm font-semibold text-indigo-600">
+          Bem-vindo à plataforma
+        </p>
+
+        <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+          Criar conta
+        </h1>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Cadastre sua empresa para começar a criar experiências especiais.
+        </p>
+      </div>
+
+      {/* Mensagens */}
+      {erro && (
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          {erro}
+        </div>
+      )}
+
+      {sucesso && (
+        <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+          {sucesso}
+        </div>
+      )}
+
+      {/* Formulário */}
+      <div className="space-y-5">
+
+        <div>
+          <label htmlFor="nomeEmpresa" className="mb-2 block text-sm font-semibold text-slate-700">
+            Nome da empresa
+          </label>
+
+          <input
+            id="nomeEmpresa"
+            type="text"
+            placeholder="Digite o nome da empresa"
+            value={nomeEmpresa}
+            onChange={(evento) => {
+              setNomeEmpresa(evento.target.value);
+              setErro("");
+            }}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="responsavel" className="mb-2 block text-sm font-semibold text-slate-700">
+            Nome do responsável
+          </label>
+
+          <input
+            id="responsavel"
+            type="text"
+            placeholder="Digite o nome do responsável"
+            value={responsavel}
+            onChange={(evento) => {
+              setResponsavel(evento.target.value);
+              setErro("");
+            }}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-700">
+            E-mail
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            placeholder="exemplo@email.com"
+            value={email}
+            onChange={(evento) => {
+              setEmail(evento.target.value);
+              setErro("");
+            }}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="senha" className="mb-2 block text-sm font-semibold text-slate-700">
+            Senha
+          </label>
+
+          <input
+            id="senha"
+            type="password"
+            placeholder="Mínimo de 6 caracteres"
+            value={senha}
+            onChange={(evento) => {
+              setSenha(evento.target.value);
+              setErro("");
+            }}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="confirmarSenha" className="mb-2 block text-sm font-semibold text-slate-700">
+            Confirmar senha
+          </label>
+
+          <input
+            id="confirmarSenha"
+            type="password"
+            placeholder="Digite sua senha novamente"
+            value={confirmarSenha}
+            onChange={(evento) => {
+              setConfirmarSenha(evento.target.value);
+              setErro("");
+            }}
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+          />
+        </div>
+
+      </div>
+
+      {/* Botões */}
+      <button
+        type="button"
+        onClick={verificacao}
+        className="mt-7 w-full rounded-xl bg-indigo-600 px-5 py-3 font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.99]"
+      >
+        Criar minha conta
+      </button>
+
+      <button
+        type="button"
+        onClick={voltarLogin}
+        className="mt-4 w-full rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+      >
         Voltar para o login
       </button>
-      <p>{erro}</p>
-      <p>{sucesso}</p>
-      <label htmlFor="nomeEmpresa">Nome da Empresa:</label>
-      <input
-        id="nomeEmpresa"
-        type="text"
-        placeholder="Digite o nome da Empresa"
-        value={nomeEmpresa}
-        onChange={(evento) => {
-          setNomeEmpresa(evento.target.value);
-          setErro("");
-        }}
-      />
-      <label htmlFor="responsavel">Nome do Responsavel:</label>
-      <input
-        id="responsavel"
-        type="text"
-        placeholder="Digite o nome do Responsavel"
-        value={responsavel}
-        onChange={(evento) => {
-          setResponsavel(evento.target.value);
-          setErro("");
-        }}
-      />
-      <label htmlFor="email">E-mail:</label>
-      <input
-        id="email"
-        type="email"
-        placeholder="Digite seu e-mail"
-        value={email}
-        onChange={(evento) => {
-          setEmail(evento.target.value);
-          setErro("");
-        }}
-      />
-      <label htmlFor="senha">Senha:</label>
-      <input
-        id="senha"
-        type="password"
-        placeholder="Digite sua senha"
-        value={senha}
-        onChange={(evento) => {
-          setSenha(evento.target.value);
-          setErro("");
-        }}
-      />
-      <label htmlFor="confirmarSenha">Confirme sua senha:</label>
-      <input
-        id="confirmarSenha"
-        type="password"
-        placeholder="Confirmar sua senha"
-        value={confirmarSenha}
-        onChange={(evento) => {
-          setConfirmarSenha(evento.target.value);
-          setErro("");
-        }}
-      />
-      <label htmlFor="perfil">Coloque sua logo:</label>
-      <input
-        id="perfil"
-        type="file"
-        onChange={(evento) => {
-          setLogo(evento.target.files[0]);
-          setErro("");
-        }}
-      />
-      <button type="submit" onClick={verificacao}>
-        enviar
-      </button>
-    </main>
-  );
+
+    </div>
+  </main>
+);
 }
 
 export default Cadastro;
