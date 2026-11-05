@@ -16,6 +16,7 @@ function Painel({ sair }) {
   const [verSolicitacoes, setVerSolicitacoes] = useState(false);
   const [mostraCliente, setMostrarCliente] = useState(false);
   const qrCodeRef = useRef(null);
+  const [excluindoId, setExcluindoId] = useState(null);
 
   // Voltar para o painel
   const voltarPainel = () => {
@@ -91,6 +92,49 @@ function Painel({ sair }) {
       console.error("Erro ao carregar solicitações:", erro);
     }
   };
+  
+
+async function excluirSolicitacao(solicitacao) {
+  const confirmar = window.confirm(
+    `Tem certeza que deseja excluir a solicitação de ${solicitacao.nome}? Esta ação não poderá ser desfeita.`
+  );
+
+  if (!confirmar) return;
+
+  setExcluindoId(solicitacao.id);
+
+  try {
+    const { data, error } = await supabase.functions.invoke(
+      "excluir-solicitacao",
+      {
+        body: {
+          solicitacao_id: solicitacao.id,
+        },
+      }
+    );
+
+    if (error) throw error;
+
+    if (data?.erro) throw new Error(data.erro);
+
+    await carregarSolicitacoes();
+
+    if (solicitacaoSelecionada?.id === solicitacao.id) {
+      setSolicitacaoSelecionada(null);
+    }
+
+    alert("Solicitação excluída com sucesso!");
+
+  } catch (erro) {
+    console.error("Erro ao excluir:", erro);
+    alert(erro.message || "Não foi possível excluir a solicitação.");
+
+  } finally {
+    setExcluindoId(null);
+  }
+}
+
+
 
   useEffect(() => {
     carregarSolicitacoes();
@@ -403,12 +447,35 @@ function Painel({ sair }) {
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => setSolicitacaoSelecionada(solicitacao)}
-                      className="w-full shrink-0 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:w-auto"
-                    >
-                      👁️ Visualizar
-                    </button>
+                   
+<div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+
+  <button
+    onClick={() => setSolicitacaoSelecionada(solicitacao)}
+    className="w-full rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:w-auto"
+  >
+    👁️ Visualizar
+  </button>
+
+ 
+<button
+  onClick={() => excluirSolicitacao(solicitacao)}
+  disabled={excluindoId !== null}
+  className={`w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition sm:w-auto ${
+    excluindoId === solicitacao.id
+      ? "cursor-wait bg-slate-500"
+      : excluindoId !== null
+        ? "cursor-not-allowed bg-slate-300"
+        : "bg-red-600 hover:bg-red-700"
+  }`}
+>
+  {excluindoId === solicitacao.id
+    ? "⏳ Excluindo..."
+    : "🗑️ Excluir"}
+</button>
+
+
+</div>
 
                   </div>
                 ))}
@@ -492,12 +559,36 @@ function Painel({ sair }) {
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => setSolicitacaoSelecionada(solicitacao)}
-                      className="w-full shrink-0 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
-                    >
-                      👁️ Visualizar
-                    </button>
+                    
+<div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+
+  <button
+    onClick={() => setSolicitacaoSelecionada(solicitacao)}
+    className="w-full rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+  >
+    👁️ Visualizar
+  </button>
+
+  
+<button
+  onClick={() => excluirSolicitacao(solicitacao)}
+  disabled={excluindoId !== null}
+  className={`w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition sm:w-auto ${
+    excluindoId === solicitacao.id
+      ? "cursor-wait bg-slate-500"
+      : excluindoId !== null
+        ? "cursor-not-allowed bg-slate-300"
+        : "bg-red-600 hover:bg-red-700"
+  }`}
+>
+  {excluindoId === solicitacao.id
+    ? "⏳ Excluindo..."
+    : "🗑️ Excluir"}
+</button>
+
+
+</div>
+
 
                   </div>
                 ))}
@@ -535,10 +626,7 @@ function Painel({ sair }) {
             {/* Cabeçalho */}
 
             <div className="mb-8 sm:mb-10">
-              <p className="text-sm font-medium text-indigo-600">
-                🌸 Painel da floricultura
-              </p>
-
+             
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-4xl">
                 Painel
               </h1>
